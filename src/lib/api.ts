@@ -1,9 +1,36 @@
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/+$/, "");
+
+function apiUrl(input: string): string {
+  if (/^https?:\/\//i.test(input) || !API_BASE_URL) return input;
+  return `${API_BASE_URL}${input.startsWith("/") ? input : `/${input}`}`;
+}
+
+function backendUrl(input: string): string {
+  if (/^https?:\/\//i.test(input) || !API_BASE_URL) return input;
+  return `${API_BASE_URL}${input.startsWith("/") ? input : `/${input}`}`;
+}
+
+function normalizeBackendUrls<T>(value: T): T {
+  if (!API_BASE_URL || value == null) return value;
+  if (Array.isArray(value)) return value.map(normalizeBackendUrls) as T;
+  if (typeof value !== "object") return value;
+
+  return Object.fromEntries(
+    Object.entries(value).map(([key, entry]) => {
+      if (typeof entry === "string" && key === "image" && entry.startsWith("/")) {
+        return [key, backendUrl(entry)];
+      }
+      return [key, normalizeBackendUrls(entry)];
+    })
+  ) as T;
+}
+
 /**
  * Fetch JSON from the dev proxy (/api → localhost:4000).
  * Avoids `res.json()` on empty bodies (e.g. API not running → "Unexpected end of JSON input").
  */
 export async function fetchJson<T>(input: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(input, {
+  const res = await fetch(apiUrl(input), {
     ...init,
     headers: {
       Accept: "application/json",
@@ -31,7 +58,7 @@ export async function fetchJson<T>(input: string, init?: RequestInit): Promise<T
     );
   }
   try {
-    return JSON.parse(text) as T;
+    return normalizeBackendUrls(JSON.parse(text) as T);
   } catch {
     throw new Error("Server did not return valid JSON.");
   }
