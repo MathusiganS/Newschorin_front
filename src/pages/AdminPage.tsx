@@ -11,15 +11,22 @@ type StatusCounts = Record<AdminStatus, number>;
 interface AdminNewsItem {
   id: number;
   title: string;
+  original_title: string;
   url: string;
   image: string;
   image_path: string;
   full_text: string;
+  original_full_text: string;
   source: string;
   category_ta?: string;
   status: AdminStatus;
   created_at: string;
 }
+
+type OriginalPreview = {
+  label: string;
+  value: string;
+};
 
 const STATUS_TABS: Array<{
   value: AdminStatus;
@@ -87,6 +94,7 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [activeItem, setActiveItem] = useState<AdminNewsItem | null>(null);
+  const [originalPreview, setOriginalPreview] = useState<OriginalPreview | null>(null);
   const [saving, setSaving] = useState(false);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(PAGE_SIZES[0]);
@@ -645,7 +653,21 @@ export default function AdminPage() {
 
                 <div className="bg-white border border-outline-variant rounded-2xl p-5 shadow-sm flex flex-col gap-4">
                   <div>
-                    <label className="text-xs text-on-surface-variant">Title *</label>
+                    <div className="flex items-center justify-between gap-3">
+                      <label className="text-xs text-on-surface-variant">Title *</label>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setOriginalPreview({
+                            label: "Original Title",
+                            value: activeItem.original_title || activeItem.title,
+                          })
+                        }
+                        className="text-xs px-2 py-1 rounded-md border border-outline-variant text-primary font-semibold"
+                      >
+                        Original
+                      </button>
+                    </div>
                     <input
                       className="mt-2 w-full border border-outline-variant rounded-lg px-3 py-2 text-sm"
                       value={activeItem.title}
@@ -729,7 +751,21 @@ export default function AdminPage() {
                   </div>
 
                   <div>
-                    <label className="text-xs text-on-surface-variant">Full Text *</label>
+                    <div className="flex items-center justify-between gap-3">
+                      <label className="text-xs text-on-surface-variant">Full Text *</label>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setOriginalPreview({
+                            label: "Original Full Text",
+                            value: activeItem.original_full_text || activeItem.full_text,
+                          })
+                        }
+                        className="text-xs px-2 py-1 rounded-md border border-outline-variant text-primary font-semibold"
+                      >
+                        Original
+                      </button>
+                    </div>
                     <div className="mt-2 border border-outline-variant rounded-lg overflow-hidden">
                       <div className="flex items-center gap-2 border-b border-outline-variant px-3 py-2 text-xs text-secondary">
                         <span className="px-2 py-1 rounded bg-surface-container-low">Paragraph</span>
@@ -759,6 +795,26 @@ export default function AdminPage() {
           </section>
         )}
       </main>
+      {originalPreview ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-3xl max-h-[80vh] overflow-hidden rounded-2xl bg-white shadow-xl border border-outline-variant">
+            <div className="flex items-center justify-between gap-4 border-b border-outline-variant px-5 py-4">
+              <h3 className="text-sm font-semibold">{originalPreview.label}</h3>
+              <button
+                type="button"
+                onClick={() => setOriginalPreview(null)}
+                className="material-symbols-outlined text-[20px] text-on-surface-variant"
+                aria-label="Close"
+              >
+                close
+              </button>
+            </div>
+            <div className="max-h-[62vh] overflow-auto whitespace-pre-wrap px-5 py-4 text-sm leading-7 text-on-surface">
+              {originalPreview.value || "No original text available."}
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

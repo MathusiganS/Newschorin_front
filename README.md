@@ -13,7 +13,7 @@ This project consists of three main components:
 ### Project Structure
 
 ```
-news_cursor/                     # repository root (scrapy.cfg lives here)
+news_cursor/                     # repository root
 ├── news-app/                    # React frontend (Vite + TypeScript)
 │   ├── src/
 │   │   ├── components/
@@ -101,7 +101,7 @@ postgresql://postgres:12345@localhost:5432/news_techorin
 
 ### Step 2: Install Python Dependencies (Scraper + FastAPI Backend)
 
-From the **repository root** (the folder that contains `scrapy.cfg` and `tamilwin_scraper/`):
+From the **repository root** (the folder that contains `tamilwin_scraper/`):
 
 ```bash
 # Windows (optional but recommended)
@@ -173,7 +173,7 @@ sudo systemctl start postgresql
 
 Use your **venv** (`python -m venv venv` then activate). Port **4000** must match `news-app/vite.config.ts`.
 
-**Option A — repository root** (folder that contains `scrapy.cfg` and `tamilwin_scraper/`):
+**Option A — repository root** (folder that contains `tamilwin_scraper/`):
 
 ```bash
 cd C:\Users\krsna\OneDrive\Documents\news_cursor
@@ -229,16 +229,13 @@ Open **http://localhost:5173** in your browser.
 
 ### Terminal 4: Run the Scraper (optional)
 
-From the **repository root**, with venv activated:
+From inside `tamilwin_scraper`, with venv activated:
 
 ```bash
 # One spider
 scrapy crawl tamilwin
 
 # Or all three spiders + automatic sync to DB (requires API running on :4000)
-# From repo root:
-python tamilwin_scraper/run_all.py
-# If your shell is already inside tamilwin_scraper/:
 python run_all.py
 ```
 
@@ -273,7 +270,8 @@ cd news-app
 npm install
 npm run dev
 
-# 4. Data (new terminal, repo root, venv on)
+# 4. Data (new terminal, tamilwin_scraper, venv on)
+cd tamilwin_scraper
 scrapy crawl tamilwin
 # Optional: push news.json into DB
 curl -X POST http://localhost:4000/api/sync -H "Content-Type: application/json" -d "{}"
@@ -283,13 +281,14 @@ curl -X POST http://localhost:4000/api/sync -H "Content-Type: application/json" 
 
 ```bash
 # Terminal A (repo root, venv on)
-uvicorn fastapi_app:app --reload --port 4000                 
+uvicorn tamilwin_scraper.fastapi_app:app --reload --port 4000                 
 
 # Terminal B
 cd news-app && npm run dev
 
 # Terminal C (when you want fresh articles)
-scrapy crawl tamilwin   # or: python tamilwin_scraper/run_all.py
+cd tamilwin_scraper
+scrapy crawl tamilwin   # or: python run_all.py
 ```
 
 ---
@@ -467,9 +466,9 @@ ISC
 | `npm run lint` | news-app | Check code quality |
 | `uvicorn tamilwin_scraper.fastapi_app:app --reload --port 4000` | repo root | Start FastAPI backend |
 | `pip install -r tamilwin_scraper/requirements.txt` | repo root | Install Python deps |
-| `playwright install chromium` | repo root | Browser for Scrapy-Playwright |
-| `scrapy crawl <spider>` | repo root | Run a spider (`tamilwin`, `virakesari`, `lankasri`) |
-| `python tamilwin_scraper/run_all.py` | repo root | All spiders + `POST /api/sync` (API must be up) |
+| `playwright install chromium` | tamilwin_scraper | Browser for Scrapy-Playwright |
+| `scrapy crawl <spider>` | tamilwin_scraper | Run a spider (`tamilwin`, `virakesari`, `lankasri`) |
+| `python run_all.py` | tamilwin_scraper | All spiders + `POST /api/sync` (API must be up) |
 | `psql -U postgres -d news_techorin` | — | Connect to database |
 
 ---
