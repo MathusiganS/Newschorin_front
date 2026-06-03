@@ -1,40 +1,61 @@
-import { Link } from "react-router-dom";
+import Link from "next/link";
 
 export default function Footer() {
   return (
-    <footer className="bg-gray-900 text-gray-400">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-          {/* Logo */}
-          <Link to="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">N</span>
-            </div>
-            <span className="text-xl font-bold text-white tracking-tight">
-              NEWSCHORIN
-            </span>
+    <footer className="w-full bg-black text-white">
+      <div className="grid w-full border-b border-white/10 md:grid-cols-12">
+        <div className="border-white/10 p-10 md:col-span-4 md:border-r lg:p-12">
+          <Link
+            href="/"
+            className="mb-7 block font-serif text-[27px] font-black uppercase leading-none tracking-normal text-white hover:text-[#ffdad6]"
+          >
+            The Chronicle
           </Link>
-
-          {/* Links */}
-          <nav className="flex flex-wrap items-center justify-center gap-6">
-            <a href="#" className="text-sm hover:text-white transition-colors">
-              About
-            </a>
-            <a href="#" className="text-sm hover:text-white transition-colors">
-              Privacy Policy
-            </a>
-            <a href="#" className="text-sm hover:text-white transition-colors">
-              Terms of Service
-            </a>
-            <a href="#" className="text-sm hover:text-white transition-colors">
-              Contact
-            </a>
-          </nav>
+          <p className="max-w-sm text-[15px] font-medium leading-6 text-white/70">
+            நம்பகமான செய்திகள், ஆழமான பகுப்பாய்வு, மக்களுக்கு தேவையான
+            முக்கிய தகவல்கள்.
+          </p>
+          <div className="mt-8 flex gap-4 text-white">
+            <span className="text-lg font-black">◎</span>
+            <span className="text-lg font-black">▣</span>
+            <span className="text-lg font-black">⌯</span>
+            <span className="text-lg font-black">@</span>
+          </div>
         </div>
 
-        {/* Copyright */}
-        <div className="mt-8 pt-8 border-t border-gray-800 text-center text-sm">
-          &copy; {new Date().getFullYear()} NewsChorin. All rights reserved.
+        <div className="border-white/10 p-10 md:col-span-2 md:border-r lg:p-12">
+          <h4 className="mb-7 text-sm font-black text-white">பிரிவுகள்</h4>
+          <ul className="grid gap-4 text-sm font-semibold text-white/55">
+            <li className="hover:text-white">அரசியல்</li>
+            <li className="hover:text-white">தொழில்நுட்பம்</li>
+            <li className="hover:text-white">வணிகம்</li>
+            <li className="hover:text-white">கல்வி</li>
+            <li className="hover:text-white">மதம் & கலாச்சாரம்</li>
+          </ul>
+        </div>
+
+        <div className="border-white/10 p-10 md:col-span-2 md:border-r lg:p-12">
+          <h4 className="mb-7 text-sm font-black text-white">நிறுவனம்</h4>
+          <ul className="grid gap-4 text-sm font-semibold text-white/55">
+            <li className="hover:text-white">எங்களை பற்றி</li>
+            <li className="hover:text-white">தொடர்பு</li>
+            <li className="hover:text-white">நெறிமுறை</li>
+            <li className="hover:text-white">வேலை வாய்ப்பு</li>
+          </ul>
+        </div>
+
+        <div className="flex flex-col justify-between p-10 md:col-span-4 lg:p-12">
+          <div>
+            <h4 className="mb-7 text-sm font-black text-white">சட்டம்</h4>
+            <ul className="grid gap-4 text-sm font-semibold text-white/55">
+              <li className="hover:text-white">தனியுரிமை கொள்கை</li>
+              <li className="hover:text-white">சேவை விதிமுறைகள்</li>
+              <li className="hover:text-white">குக்கீ கொள்கை</li>
+            </ul>
+          </div>
+          <p className="mt-12 border-t border-white/10 pt-8 text-[11px] font-black uppercase tracking-[0.16em] text-white/35">
+            © 2026 The Chronicle News Portal. All Rights Reserved.
+          </p>
         </div>
       </div>
     </footer>

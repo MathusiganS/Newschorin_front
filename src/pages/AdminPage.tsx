@@ -1,5 +1,7 @@
+"use client";
+
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import Link from "next/link";
 
 import { TAMIL_NEWS_CATEGORIES } from "../constants/tamilCategories";
 import { fetchAdminJson } from "../lib/api";
@@ -50,18 +52,31 @@ const STATUS_TABS: Array<{
   },
 ];
 
+const CATEGORY_ICONS: Record<string, string> = {
+  அரசியல்: "account_balance",
+  பொருளாதாரம்: "monitoring",
+  வணிகம்: "business_center",
+  விளையாட்டு: "sports_cricket",
+  சுகாதாரம்: "health_and_safety",
+  தொழில்நுட்பம்: "memory",
+  சர்வதேசம்: "public",
+  "குற்றம் & சட்டம்": "gavel",
+  கல்வி: "school",
+  "விபத்து & அனர்த்தம்": "warning",
+  போக்குவரத்து: "directions_car",
+  "அரசு அறிவிப்பு": "campaign",
+  "சுற்றுலா & குடிவரவு": "flight",
+  "மதம் & கலாச்சாரம்": "temple_hindu",
+};
+
 const CATEGORY_NAV = [
-  { value: "all", icon: "grid_view", ta: "டாஷ்போர்ட்", en: "Dashboard" },
-  { value: "admin", icon: "edit_square", ta: "நிர்வாக பலகம்", en: "Admin Panel" },
-  { value: "தொழில்நுட்பம்", icon: "memory", ta: "தொழில்நுட்பம்", en: "Technology" },
-  { value: "சர்வதேசம்", icon: "public", ta: "சர்வதேசம்", en: "International" },
-  { value: "குற்றம் & சட்டம்", icon: "gavel", ta: "குற்றம் & சட்டம்", en: "Crime & Law" },
-  { value: "கல்வி", icon: "school", ta: "கல்வி", en: "Education" },
-  { value: "விபத்து & அனர்த்தம்", icon: "warning", ta: "விபத்து & அனர்த்தம்", en: "Accident & Disaster" },
-  { value: "போக்குவரத்து", icon: "directions_car", ta: "போக்குவரத்து", en: "Transport" },
-  { value: "அரசு அறிவிப்பு", icon: "campaign", ta: "அரசு அறிவிப்பு", en: "Govt Announcement" },
-  { value: "சுற்றுலா & குடிவரவு", icon: "flight", ta: "சுற்றுலா & குடிவரவு", en: "Tourism & Immigration" },
-  { value: "மதம் & கலாச்சாரம்", icon: "temple_hindu", ta: "மதம் & கலாச்சாரம்", en: "Religion & Culture" },
+  { value: "admin", icon: "edit_square", label: "நிர்வாக பலகம்" },
+  { value: "all", icon: "grid_view", label: "அனைத்து செய்திகள்" },
+  ...TAMIL_NEWS_CATEGORIES.map((category) => ({
+    value: category,
+    icon: CATEGORY_ICONS[category] ?? "article",
+    label: category,
+  })),
 ];
 
 const PAGE_SIZES = [10, 20, 30];
@@ -81,7 +96,7 @@ function formatRelativeTime(iso: string) {
 export default function AdminPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [authed, setAuthed] = useState(() => !!localStorage.getItem("adminAuth"));
+  const [authed, setAuthed] = useState(false);
   const [statusFilter, setStatusFilter] = useState<AdminStatus>("pending");
   const [categoryFilter, setCategoryFilter] = useState<string>("admin");
   const [searchQuery, setSearchQuery] = useState("");
@@ -98,6 +113,12 @@ export default function AdminPage() {
   const [saving, setSaving] = useState(false);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(PAGE_SIZES[0]);
+
+  useEffect(() => {
+    queueMicrotask(() => {
+      setAuthed(!!localStorage.getItem("adminAuth"));
+    });
+  }, []);
 
   const loadItems = useCallback((filter: AdminStatus) => {
     setLoading(true);
@@ -142,8 +163,10 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (!authed) return;
-    loadItems(statusFilter);
-    loadCounts();
+    queueMicrotask(() => {
+      loadItems(statusFilter);
+      loadCounts();
+    });
   }, [authed, loadItems, loadCounts, statusFilter]);
 
   const onLogin = (event: React.FormEvent) => {
@@ -276,60 +299,56 @@ export default function AdminPage() {
 
   return (
     <div className="bg-surface text-on-surface h-screen flex overflow-hidden antialiased font-body-md">
-      <nav className="hidden lg:flex fixed left-0 top-0 h-full w-[260px] bg-gradient-to-b from-[#0e2a66] to-[#0a1f45] text-white flex-col pt-6 pb-4 z-40">
-        <div className="px-6">
+      <nav className="hidden lg:flex fixed left-0 top-0 h-full w-[280px] bg-gradient-to-b from-[#0e2a66] to-[#0a1f45] text-white flex-col pt-6 pb-4 z-40">
+        <div className="px-5">
           <div className="flex items-center gap-3">
-            <span className="w-10 h-10 bg-[#0f59ff] rounded-xl flex items-center justify-center text-white font-bold">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0f59ff] font-bold text-white">
               N
             </span>
-            <div>
-              <p className="text-sm uppercase tracking-wide font-semibold">NEWSCHORIN</p>
-              <p className="text-[11px] text-white/70">Editorial Desk</p>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold uppercase tracking-wide">
+                NEWSCHORIN
+              </p>
+              <p className="text-[11px] text-white/70">ஆசிரியர் மேசை</p>
             </div>
           </div>
-          <p className="text-[11px] text-white/60 mt-2">Vigilant Management</p>
+          <p className="mt-2 text-[11px] text-white/60">செய்தி மேலாண்மை</p>
         </div>
 
-        <div className="mt-8 flex-1 overflow-y-auto custom-scrollbar px-4 space-y-2">
+        <div className="mt-7 flex-1 space-y-1.5 overflow-y-auto px-4 custom-scrollbar">
           {CATEGORY_NAV.map((cat) => {
             const active = categoryFilter === cat.value;
-            const isHomeLink = cat.value === "all";
+            const className = `grid h-11 w-full grid-cols-[32px_1fr] items-center gap-3 rounded-lg border px-3 text-left transition-colors ${
+              active
+                ? "border-white/20 bg-white/10 text-white shadow-sm"
+                : "border-transparent text-white/80 hover:bg-white/10 hover:text-white"
+            }`;
+
             const content = (
               <>
-                <span className="material-symbols-outlined text-[18px]">
+                <span className="material-symbols-outlined flex h-8 w-8 items-center justify-center text-[19px]">
                   {cat.icon}
                 </span>
-                <div>
-                  <p className="text-sm font-medium">{cat.ta}</p>
-                  <p className="text-[11px] text-white/60">{cat.en}</p>
-                </div>
+                <span className="min-w-0 truncate text-[14px] font-semibold leading-none">
+                  {cat.label}
+                </span>
               </>
             );
-            if (isHomeLink) {
+
+            if (cat.value === "all") {
               return (
-                <Link
-                  key={cat.value}
-                  to="/"
-                  className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors ${
-                    active
-                      ? "bg-white/10 border border-white/20"
-                      : "hover:bg-white/10"
-                  }`}
-                >
+                <Link key={cat.value} href="/" className={className}>
                   {content}
                 </Link>
               );
             }
+
             return (
               <button
                 key={cat.value}
                 type="button"
                 onClick={() => setCategoryFilter(cat.value)}
-                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-colors ${
-                  active
-                    ? "bg-white/10 border border-white/20"
-                    : "hover:bg-white/10"
-                }`}
+                className={className}
               >
                 {content}
               </button>
@@ -337,29 +356,33 @@ export default function AdminPage() {
           })}
         </div>
 
-        <div className="px-4 pt-4 border-t border-white/10 space-y-2">
+        <div className="space-y-1.5 border-t border-white/10 px-4 pt-4">
           <button
             type="button"
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left text-white/80 hover:bg-white/10"
+            className="grid h-11 w-full grid-cols-[32px_1fr] items-center gap-3 rounded-lg px-3 text-left text-white/80 hover:bg-white/10 hover:text-white"
           >
-            <span className="material-symbols-outlined text-[18px]">settings</span>
-            <span className="text-sm">Settings</span>
+            <span className="material-symbols-outlined flex h-8 w-8 items-center justify-center text-[19px]">
+              settings
+            </span>
+            <span className="truncate text-[14px] font-semibold">அமைப்புகள்</span>
           </button>
           <button
             type="button"
             onClick={onLogout}
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left text-white/80 hover:bg-white/10"
+            className="grid h-11 w-full grid-cols-[32px_1fr] items-center gap-3 rounded-lg px-3 text-left text-white/80 hover:bg-white/10 hover:text-white"
           >
-            <span className="material-symbols-outlined text-[18px]">logout</span>
-            <span className="text-sm">Logout</span>
+            <span className="material-symbols-outlined flex h-8 w-8 items-center justify-center text-[19px]">
+              logout
+            </span>
+            <span className="truncate text-[14px] font-semibold">வெளியேறு</span>
           </button>
         </div>
       </nav>
 
-      <main className="flex-1 flex flex-col h-full bg-surface lg:ml-[260px]">
+      <main className="flex-1 flex flex-col h-full bg-surface lg:ml-[280px]">
         <header className="h-16 px-8 flex items-center justify-between border-b border-outline-variant bg-white">
           <div className="text-sm text-secondary flex items-center gap-2">
-            <Link to="/" className="hover:text-primary transition-colors">
+            <Link href="/" className="hover:text-primary transition-colors">
               Home
             </Link>
             <span className="text-secondary/50">›</span>

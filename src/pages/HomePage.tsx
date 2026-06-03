@@ -1,8 +1,11 @@
-import { useEffect, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 
 import { TAMIL_NEWS_CATEGORIES } from "../constants/tamilCategories";
-import { fetchNewsList } from "../lib/api";
+import { fetchNewsList, fetchPopularNews } from "../lib/api";
 
 interface NewsItem {
   id: number;
@@ -11,10 +14,119 @@ interface NewsItem {
   source: string;
   category_ta?: string;
   created_at: string;
+  view_count?: number;
+  excerpt?: string;
+}
+
+const SECTION_ROWS = [
+  ["அரசியல்", "தொழில்நுட்பம்"],
+] as const;
+
+const INTERNATIONAL_CATEGORY = "சர்வதேசம்";
+
+function articleHref(article: NewsItem) {
+  return `/article/${article.id}`;
+}
+
+function formatDate(date: string) {
+  return new Date(date).toLocaleString("ta-LK", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function articleImage(article: NewsItem, className: string) {
+  if (article.image) {
+    return <img src={article.image} alt={article.title} className={className} />;
+  }
+
+  return (
+    <div className={`${className} flex items-center justify-center bg-[#e4e9ed]`}>
+      <span className="font-serif text-4xl font-black text-[#c6c6cd]">N</span>
+    </div>
+  );
+}
+
+function AdBlock({
+  label,
+  size,
+  compact = false,
+  variant = "billboard",
+}: {
+  label: string;
+  size: string;
+  compact?: boolean;
+  variant?: "billboard" | "leaderboard";
+}) {
+  const isLeaderboard = variant === "leaderboard";
+
+  return (
+    <div
+      className={`flex flex-col items-center justify-center bg-[#e4e9ed] text-center ${
+        compact
+          ? "min-h-[250px] p-2"
+          : isLeaderboard
+            ? "my-10 py-8 px-4"
+            : "my-10 min-h-[280px] p-8"
+      }`}
+    >
+      <span className="mb-2 text-[10px] font-bold uppercase text-[#76777d]">
+        விளம்பரம்
+      </span>
+      <div
+        className={`flex items-center justify-center border border-dashed border-[#76777d] text-sm font-semibold text-[#76777d] ${
+          compact
+            ? "h-[206px] w-full"
+            : isLeaderboard
+              ? "h-[90px] w-full max-w-[728px]"
+              : "h-[204px] w-full max-w-[970px]"
+        }`}
+      >
+        {label} - {size}
+      </div>
+    </div>
+  );
+}
+
+function articleExcerpt(article: NewsItem) {
+  const text = article.excerpt?.trim();
+  if (text) return text;
+  return formatDate(article.created_at);
+}
+
+function isInternationalArticle(article: NewsItem) {
+  return article.category_ta === INTERNATIONAL_CATEGORY;
+}
+
+function SectionTitle({
+  title,
+  link,
+}: {
+  title: string;
+  link?: string;
+}) {
+  return (
+    <div className="flex h-[70px] items-center justify-between border-b border-[#c6c6cd] bg-[#f0f4f8] px-7">
+      <h2 className="border-l-4 border-[#bb0112] pl-3 font-serif text-[24px] font-black">
+        {title}
+      </h2>
+      {link ? (
+        <Link
+          href={link}
+          className="text-[11px] font-black text-black hover:text-[#bb0112]"
+        >
+          அனைத்தும்
+        </Link>
+      ) : null}
+    </div>
+  );
 }
 
 export default function HomePage() {
-  const [searchParams] = useSearchParams();
+  const searchParams = useSearchParams();
   const categoryParam = searchParams.get("category")?.trim() ?? "";
   const categoryFilter =
     categoryParam &&
@@ -23,174 +135,587 @@ export default function HomePage() {
       : "";
 
   const [articles, setArticles] = useState<NewsItem[]>([]);
+  const [allArticles, setAllArticles] = useState<NewsItem[]>([]);
+  const [trendingArticles, setTrendingArticles] = useState<NewsItem[]>([]);
+  const [categoryVisibleState, setCategoryVisibleState] = useState({
+    category: "",
+    count: 4,
+  });
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
-    setLoadError(null);
+    queueMicrotask(() => {
+      if (!cancelled) {
+        setLoading(true);
+        setLoadError(null);
+      }
+    });
+
     fetchNewsList<NewsItem>(
       categoryFilter ? { category_ta: categoryFilter } : undefined
     )
       .then((data) => {
         if (!cancelled) setArticles(data);
       })
-      .catch((e: unknown) => {
+      .catch((error: unknown) => {
         if (!cancelled) {
           setArticles([]);
-          setLoadError(e instanceof Error ? e.message : "Failed to load news");
+          setLoadError(
+            error instanceof Error ? error.message : "செய்திகளை ஏற்ற முடியவில்லை."
+          );
         }
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
       });
+
     return () => {
       cancelled = true;
     };
   }, [categoryFilter]);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    fetchNewsList<NewsItem>()
+      .then((data) => {
+        if (!cancelled) setAllArticles(data);
+      })
+      .catch(() => {
+        if (!cancelled) setAllArticles([]);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadTrending = () => {
+      fetchPopularNews<NewsItem>(4)
+        .then((data) => {
+          if (!cancelled) {
+            setTrendingArticles(
+              data.filter((article) => (article.view_count ?? 0) > 0)
+            );
+          }
+        })
+        .catch(() => {
+          if (!cancelled) setTrendingArticles([]);
+        });
+    };
+
+    const loadTrendingWhenVisible = () => {
+      if (document.visibilityState === "visible") loadTrending();
+    };
+
+    loadTrending();
+    window.addEventListener("focus", loadTrending);
+    window.addEventListener("pageshow", loadTrending);
+    document.addEventListener("visibilitychange", loadTrendingWhenVisible);
+
+    return () => {
+      cancelled = true;
+      window.removeEventListener("focus", loadTrending);
+      window.removeEventListener("pageshow", loadTrending);
+      document.removeEventListener("visibilitychange", loadTrendingWhenVisible);
+    };
+  }, []);
+
+  const categorySourceArticles = allArticles.length ? allArticles : articles;
+
+  const grouped = useMemo(() => {
+    return TAMIL_NEWS_CATEGORIES.reduce<Record<string, NewsItem[]>>(
+      (acc, category) => {
+        acc[category] = categorySourceArticles.filter(
+          (article) => article.category_ta === category
+        );
+        return acc;
+      },
+      {}
+    );
+  }, [categorySourceArticles]);
+
   if (loading) {
     return (
-      <main className="flex-1 flex items-center justify-center py-20">
-        <div className="animate-pulse text-gray-500">Loading news...</div>
+      <main className="flex flex-1 items-center justify-center bg-[#f6fafe] py-24">
+        <div className="border border-[#c6c6cd] bg-white px-6 py-4 text-sm font-semibold text-[#76777d]">
+          செய்திகள் ஏற்றப்படுகின்றன...
+        </div>
       </main>
     );
   }
 
   if (loadError) {
     return (
-      <main className="flex-1 max-w-xl mx-auto px-4 py-16 text-center">
-        <h1 className="text-lg font-semibold text-gray-900 mb-2">
-          Could not load news
-        </h1>
-        <p className="text-sm text-gray-600 mb-4">{loadError}</p>
-        <p className="text-xs text-gray-500">
-          From the repo root, run:{" "}
-          <code className="rounded bg-gray-100 px-1 py-0.5">
-            uvicorn tamilwin_scraper.fastapi_app:app --port 4000
-          </code>
-          , then sync data (e.g. POST /api/sync) if the database is empty.
-        </p>
+      <main className="flex flex-1 items-center justify-center bg-[#f6fafe] px-4 py-24 text-center">
+        <div className="max-w-xl border border-[#c6c6cd] bg-white p-8">
+          <h1 className="font-serif text-2xl font-black text-black">
+            செய்திகள் ஏற்ற முடியவில்லை
+          </h1>
+          <p className="mt-3 text-sm leading-6 text-[#45464d]">{loadError}</p>
+        </div>
+      </main>
+    );
+  }
+
+  if (articles.length === 0) {
+    return (
+      <main className="flex flex-1 items-center justify-center bg-[#f6fafe] px-4 py-24 text-center">
+        <div className="max-w-xl border border-[#c6c6cd] bg-white p-8">
+          <h1 className="font-serif text-2xl font-black text-black">
+            செய்திகள் இல்லை
+          </h1>
+          {categoryFilter ? (
+            <Link
+              href="/"
+              className="mt-4 inline-block text-sm font-black text-[#bb0112] hover:underline"
+            >
+              அனைத்து செய்திகளையும் காட்டு
+            </Link>
+          ) : null}
+        </div>
       </main>
     );
   }
 
   const featured = articles[0];
-  const latest = articles.slice(1);
+  const latest = articles.slice(1, 5);
+  const trending = trendingArticles.slice(0, 4);
+  const internationalStories = categorySourceArticles
+    .filter(isInternationalArticle)
+    .slice(0, 3);
 
-  return (
-    <main className="flex-1">
-      {articles.length === 0 ? (
-        <section className="flex-1 flex flex-col items-center justify-center py-20 px-4 text-center gap-2">
-          <div className="text-gray-600 font-medium">
-            {categoryFilter
-              ? `“${categoryFilter}” பிரிவில் செய்திகள் எதுவும் இல்லை.`
-              : "No news articles found."}
-          </div>
-          {categoryFilter ? (
-            <Link to="/" className="text-sm text-blue-600 hover:underline">
-              அனைத்து செய்திகளையும் காட்டு
-            </Link>
-          ) : null}
-        </section>
-      ) : (
-        <>
-          {/* Hero / Featured Article */}
-          <section className="max-w-6xl mx-auto px-4 sm:px-6 py-8 md:py-12">
-            <Link to={`/article/${featured.id}`} className="block group">
-              <div className="grid md:grid-cols-2 gap-6 md:gap-10 items-center">
-                <div className="relative overflow-hidden rounded-2xl">
-                  {featured.image ? (
-                    <img
-                      src={featured.image}
-                      alt={featured.title}
-                      className="w-full h-64 md:h-80 object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                  ) : (
-                    <div className="w-full h-64 md:h-80 bg-linear-to-br from-blue-100 to-blue-200 flex items-center justify-center">
-                      <span className="text-blue-400 text-4xl font-bold">N</span>
+  if (categoryFilter) {
+    const categoryLead = articles[0];
+    const categoryDevelopments = articles.slice(1);
+    const categoryVisibleCount =
+      categoryVisibleState.category === categoryFilter
+        ? categoryVisibleState.count
+        : 4;
+    const visibleCategoryDevelopments = categoryDevelopments.slice(
+      0,
+      categoryVisibleCount
+    );
+    const hasMoreCategoryDevelopments =
+      categoryVisibleCount < categoryDevelopments.length;
+    const categoryTrending = categorySourceArticles
+      .filter((article) => article.category_ta === categoryFilter)
+      .slice()
+      .sort((a, b) => {
+        const viewDiff = (b.view_count ?? 0) - (a.view_count ?? 0);
+        if (viewDiff !== 0) return viewDiff;
+        return (
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+      })
+      .slice(0, 5);
+
+    return (
+      <main className="flex-1 bg-white text-[#171c1f]">
+        <div className="mx-auto w-full max-w-[1280px] px-5 py-12">
+          <header className="mb-12 flex flex-col justify-between gap-6 border-b border-black pb-6 md:flex-row md:items-end">
+            <div className="max-w-3xl">
+              <h1 className="font-serif text-[42px] font-black leading-tight text-black md:text-[56px]">
+                {categoryFilter}
+              </h1>
+              <p className="mt-3 text-[18px] leading-8 text-[#45464d]">
+                {categoryFilter} தொடர்பான சமீபத்திய செய்திகள், முக்கிய
+                நிகழ்வுகள் மற்றும் விரிவான தகவல்கள்.
+              </p>
+            </div>
+            <div className="hidden text-right md:block">
+              <p className="text-[12px] font-black uppercase tracking-[0.16em] text-[#76777d]">
+                NewsChorin / Tamil News
+              </p>
+            </div>
+          </header>
+
+          <Link
+            href={articleHref(categoryLead)}
+            className="group mb-20 flex cursor-pointer flex-col gap-12 lg:flex-row"
+          >
+            <div className="overflow-hidden rounded lg:w-[40%]">
+              {articleImage(
+                categoryLead,
+                "h-[400px] w-full object-cover transition duration-700 group-hover:scale-105"
+              )}
+            </div>
+            <div className="flex flex-col justify-center lg:w-[60%]">
+              <span className="mb-5 w-fit rounded bg-[#f0f4f8] px-3 py-1 text-[12px] font-black tracking-[0.05em] text-black">
+                {categoryFilter}
+              </span>
+              <h2 className="font-serif text-[34px] font-black leading-tight text-black group-hover:underline group-hover:decoration-[#bb0112] group-hover:decoration-2 group-hover:underline-offset-4 md:text-[48px]">
+                {categoryLead.title}
+              </h2>
+              <p className="mt-6 text-[18px] leading-8 text-[#45464d]">
+                {articleExcerpt(categoryLead)}
+              </p>
+              <div className="mt-6 flex flex-wrap items-center gap-3">
+                <span className="text-[13px] font-black text-black">
+                  {categoryLead.category_ta || categoryFilter}
+                </span>
+                <span className="h-1 w-1 rounded-full bg-[#c6c6cd]" />
+                <span className="text-[13px] font-semibold text-[#76777d]">
+                  {formatDate(categoryLead.created_at)}
+                </span>
+              </div>
+            </div>
+          </Link>
+
+          <div className="grid grid-cols-1 gap-12 lg:grid-cols-12">
+            <div className="lg:col-span-8">
+              <h3 className="mb-6 border-b border-[#c6c6cd] pb-2 text-[12px] font-black uppercase tracking-[0.08em] text-[#bb0112]">
+                சமீபத்திய முன்னேற்றங்கள்
+              </h3>
+
+              {categoryDevelopments.length > 0 ? (
+                <>
+                  <div className="grid grid-cols-1 gap-12 md:grid-cols-2">
+                    {visibleCategoryDevelopments.map((article) => (
+                      <Link
+                        key={article.id}
+                        href={articleHref(article)}
+                        className="group flex cursor-pointer flex-col overflow-hidden rounded border border-[#c6c6cd] bg-white transition-colors hover:border-black"
+                      >
+                        <div className="aspect-video overflow-hidden">
+                          {articleImage(
+                            article,
+                            "h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                          )}
+                        </div>
+                        <div className="p-6">
+                          <h4 className="font-serif text-[24px] font-black leading-tight text-black transition-colors group-hover:text-[#bb0112]">
+                            {article.title}
+                          </h4>
+                          <p className="mt-4 line-clamp-3 text-[15px] leading-6 text-[#45464d]">
+                            {articleExcerpt(article)}
+                          </p>
+                          <div className="mt-6 flex items-center justify-between border-t border-[#c6c6cd] pt-4">
+                            <span className="text-[13px] font-semibold text-[#76777d]">
+                              {formatDate(article.created_at)}
+                            </span>
+                            <span className="material-symbols-outlined text-[#76777d] transition-colors group-hover:text-black">
+                              bookmark
+                            </span>
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+
+                  {hasMoreCategoryDevelopments ? (
+                    <div className="mt-12 flex justify-center">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setCategoryVisibleState({
+                            category: categoryFilter,
+                            count: categoryDevelopments.length,
+                          })
+                        }
+                        className="border border-black px-10 py-4 text-[12px] font-black uppercase tracking-[0.08em] text-black transition-colors hover:bg-black hover:text-white"
+                      >
+                        மேலும் செய்திகள்
+                      </button>
                     </div>
-                  )}
-                </div>
-
-                <div className="flex flex-col gap-4">
-                  <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-900 leading-tight group-hover:text-blue-600 transition-colors">
-                    {featured.title}
-                  </h1>
-                  {featured.category_ta ? (
-                    <span className="inline-flex w-fit rounded-full bg-blue-50 px-3 py-1 text-sm font-medium text-blue-800">
-                      {featured.category_ta}
-                    </span>
                   ) : null}
-                  <div className="text-sm text-gray-500">
-                    {new Date(featured.created_at).toLocaleDateString("en-US", {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                    })}
+                </>
+              ) : (
+                <div className="border border-[#c6c6cd] bg-[#f6fafe] p-8 text-sm font-semibold text-[#76777d]">
+                  இந்தப் பிரிவில் மேலும் செய்திகள் இல்லை.
+                </div>
+              )}
+            </div>
+
+            <aside className="space-y-12 lg:col-span-4">
+              <section className="rounded bg-[#f0f4f8] p-6">
+                <h3 className="mb-6 flex items-center gap-2 border-b-2 border-black pb-2 text-[12px] font-black uppercase tracking-[0.08em] text-black">
+                  <span className="material-symbols-outlined text-[19px]">
+                    trending_up
+                  </span>
+                  {categoryFilter} அதிகம் வாசிக்கப்பட்டவை
+                </h3>
+                <ul className="space-y-6">
+                  {categoryTrending.map((article, index) => (
+                    <li key={`${article.id}-category-trend`}>
+                      <Link
+                        href={articleHref(article)}
+                        className="group flex gap-5"
+                      >
+                        <span className="font-serif text-[28px] font-black leading-none text-[#c6c6cd] transition-colors group-hover:text-[#bb0112]">
+                          {String(index + 1).padStart(2, "0")}
+                        </span>
+                        <div>
+                          <h4 className="text-[16px] font-black leading-tight text-black group-hover:underline">
+                            {article.title}
+                          </h4>
+                          <span className="mt-2 block text-[13px] font-semibold text-[#76777d]">
+                            {formatDate(article.created_at)}
+                          </span>
+                        </div>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+
+              <div className="flex flex-col items-center">
+                <span className="mb-1 text-[10px] font-black uppercase tracking-[0.12em] text-[#76777d]">
+                  விளம்பரம்
+                </span>
+                <div className="flex h-[250px] w-[300px] items-center justify-center border border-[#c6c6cd] bg-[#e4e9ed] p-6 text-center">
+                  <div>
+                    <p className="mb-2 text-[12px] font-black text-[#76777d]">
+                      300×250 Sidebar MREC
+                    </p>
+                    <p className="font-serif text-[24px] font-black leading-tight text-[#45464d]">
+                      உண்மையான செய்திகளுடன் இருங்கள்.
+                    </p>
                   </div>
                 </div>
               </div>
-            </Link>
-          </section>
+            </aside>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
-          {/* Latest Stories */}
-          {latest.length > 0 && (
-            <section className="max-w-6xl mx-auto px-4 sm:px-6 pb-12 md:pb-16">
-              <div className="flex items-center justify-between mb-8">
-                <h2 className="text-xl md:text-2xl font-bold text-gray-900">
-                  LATEST STORIES
-                </h2>
+  return (
+    <main className="flex-1 bg-[#f6fafe] text-[#171c1f]">
+      <section className="mx-auto w-full max-w-[1280px] border-x border-b border-[#c6c6cd] bg-white">
+        <Link
+          href={articleHref(featured)}
+          className="group grid lg:grid-cols-5"
+        >
+          <div className="relative h-[220px] overflow-hidden lg:col-span-2">
+            {articleImage(
+              featured,
+              "h-full w-full object-cover grayscale transition duration-700 group-hover:grayscale-0"
+            )}
+            <span className="absolute left-6 top-6 bg-[#bb0112] px-3 py-1 text-[11px] font-black tracking-wide text-white">
+              முக்கிய செய்தி
+            </span>
+          </div>
+          <div className="flex h-[220px] flex-col justify-center p-8 lg:col-span-3 lg:p-10">
+            <span className="mb-4 text-[11px] font-black tracking-[0.14em] text-[#bb0112]">
+              {featured.category_ta || "செய்திகள்"}
+            </span>
+            <h1 className="font-serif text-[30px] font-black leading-[1.02] text-[#bb0112] transition-colors group-hover:text-black md:text-[36px]">
+              {featured.title}
+            </h1>
+            <div className="mt-5 border-t border-[#c6c6cd] pt-3">
+              <p className="text-xs font-black text-black">
+                {featured.category_ta || "செய்திகள்"}
+              </p>
+              <p className="mt-1 text-xs font-semibold text-[#76859b]">
+                {formatDate(featured.created_at)}
+              </p>
+            </div>
+          </div>
+        </Link>
+      </section>
+
+      <section className="mx-auto grid w-full max-w-[1280px] border-x border-b border-[#c6c6cd] bg-white lg:grid-cols-[1fr_320px]">
+        <div className="lg:border-r lg:border-[#c6c6cd]">
+          <div className="flex h-[70px] items-center justify-between border-b border-[#c6c6cd] bg-[#f0f4f8] px-7">
+            <h2 className="font-serif text-2xl font-black">
+              சமீபத்திய செய்திகள்
+            </h2>
+            {categoryFilter ? (
+              <Link
+                href="/"
+                className="text-[11px] font-black text-[#bb0112] hover:underline"
+              >
+                வடிகட்டலை நீக்கு
+              </Link>
+            ) : null}
+          </div>
+
+          <div className="grid md:grid-cols-2">
+            {latest.map((article, index) => (
+              <Link
+                key={article.id}
+                href={articleHref(article)}
+                className={`group min-h-[255px] border-b border-[#c6c6cd] p-7 transition-colors hover:bg-[#f0f4f8] ${
+                  index % 2 === 0 ? "md:border-r md:border-[#c6c6cd]" : ""
+                }`}
+              >
+                {index < 2 ? (
+                  <div className="mb-5 aspect-video overflow-hidden">
+                    {articleImage(
+                      article,
+                      "h-full w-full object-cover grayscale transition duration-700 group-hover:grayscale-0"
+                    )}
+                  </div>
+                ) : null}
+                <span className="mb-2 block text-[11px] font-black text-[#bb0112]">
+                  {article.category_ta || "செய்திகள்"}
+                </span>
+                <h3 className="font-serif text-[22px] font-black leading-tight group-hover:underline">
+                  {article.title}
+                </h3>
+                <p className="mt-4 text-sm font-semibold text-[#76859b]">
+                  {formatDate(article.created_at)}
+                </p>
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        <aside className="flex flex-col bg-[#f0f4f8]">
+          <div className="bg-black px-7 py-6 text-[12px] font-black tracking-[0.12em] text-white">
+            அதிகம் வாசிக்கப்பட்டவை
+          </div>
+          <div className="bg-white">
+            {trending.length > 0 ? (
+              trending.map((article, index) => (
+                <Link
+                  key={`${article.id}-trend`}
+                  href={articleHref(article)}
+                  className="group flex gap-5 border-b border-[#c6c6cd] p-7 transition-colors hover:bg-[#f0f4f8]"
+                >
+                  <span className="font-serif text-[38px] font-black leading-none text-[#c6c6cd]">
+                    {index + 1}
+                  </span>
+                  <div>
+                    <h3 className="font-serif text-[16px] font-black leading-tight group-hover:underline">
+                      {article.title}
+                  </h3>
+                  <p className="mt-2 text-xs font-semibold text-[#76859b]">
+                      {article.category_ta || "செய்திகள்"} •{" "}
+                      {formatDate(article.created_at)}
+                  </p>
+                  </div>
+                </Link>
+              ))
+            ) : (
+              <div className="border-b border-[#c6c6cd] p-7 text-sm font-semibold leading-6 text-[#76859b]">
+                வாசிப்பு எண்ணிக்கை கிடைத்த பிறகு அதிகம் வாசிக்கப்பட்ட செய்திகள் இங்கு தோன்றும்.
               </div>
+            )}
+          </div>
+          <div className="mt-auto min-h-[330px] bg-[#f0f4f8] p-2 pt-20">
+            <AdBlock label="MREC" size="300×250" compact />
+          </div>
+        </aside>
+      </section>
 
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-                {latest.map((article) => (
-                  <Link
-                    key={article.id}
-                    to={`/article/${article.id}`}
-                    className="group flex flex-col bg-white rounded-xl overflow-hidden border border-gray-100 hover:shadow-lg transition-shadow duration-300"
-                  >
-                    <div className="relative overflow-hidden">
-                      {article.image ? (
-                        <img
-                          src={article.image}
-                          alt={article.title}
-                          className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-500"
-                        />
-                      ) : (
-                        <div className="w-full h-48 bg-linear-to-br from-gray-100 to-gray-200 flex items-center justify-center">
-                          <span className="text-gray-400 text-3xl font-bold">
-                            N
+      <section className="mx-auto w-full max-w-[1280px] px-0">
+        <AdBlock label="நடுப்பக்க விளம்பரம்" size="970×250" />
+      </section>
+
+      {SECTION_ROWS.map((row) => {
+        const visibleSections = row.map((category) => ({
+          category,
+          items: grouped[category]?.slice(0, 2) ?? [],
+        }));
+
+        if (visibleSections.every((section) => section.items.length === 0)) {
+          return null;
+        }
+
+        return (
+          <section
+            key={row.join("-")}
+            className="mx-auto grid w-full max-w-[1280px] border-x border-b border-[#c6c6cd] bg-white lg:grid-cols-2"
+          >
+            {visibleSections.map((section, index) => (
+              <div
+                key={section.category}
+                className={
+                  index === 0 && visibleSections.length > 1
+                    ? "lg:border-r lg:border-[#c6c6cd]"
+                    : ""
+                }
+              >
+                <SectionTitle
+                  title={section.category}
+                  link={`/?category=${encodeURIComponent(section.category)}`}
+                />
+                <div className="grid md:grid-cols-2">
+                  {section.items.length > 0
+                    ? section.items.map((article, articleIndex) => (
+                        <Link
+                          key={article.id}
+                          href={articleHref(article)}
+                          className={`min-h-[210px] p-7 transition-colors hover:bg-[#f0f4f8] ${
+                            articleIndex === 0
+                              ? "border-b border-[#c6c6cd] md:border-b-0 md:border-r"
+                              : ""
+                          }`}
+                        >
+                          <span className="mb-3 block text-[10px] font-black text-[#bb0112]">
+                            {article.category_ta || "செய்திகள்"}
                           </span>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex flex-col gap-3 p-5 flex-1">
-                      <h3 className="text-lg font-bold text-gray-900 leading-snug group-hover:text-blue-600 transition-colors">
-                        {article.title}
-                      </h3>
-                      {article.category_ta ? (
-                        <span className="inline-flex w-fit rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-700">
-                          {article.category_ta}
-                        </span>
-                      ) : null}
-                      <div className="mt-auto pt-3 text-xs text-gray-400 text-right">
-                        {new Date(article.created_at).toLocaleDateString("en-US", {
-                          year: "numeric",
-                          month: "short",
-                          day: "numeric",
-                        })}
-                      </div>
-                    </div>
-                  </Link>
-                ))}
+                          <h3 className="font-serif text-[20px] font-black leading-tight">
+                            {article.title}
+                          </h3>
+                          <p className="mt-5 text-sm font-black text-[#76859b]">
+                            {formatDate(article.created_at)}
+                          </p>
+                        </Link>
+                      ))
+                    : [0, 1].map((slot) => (
+                        <div
+                          key={`${section.category}-${slot}`}
+                          className={`min-h-[210px] p-7 ${
+                            slot === 0
+                              ? "border-b border-[#c6c6cd] md:border-b-0 md:border-r"
+                              : ""
+                          }`}
+                        />
+                      ))}
+                </div>
               </div>
-            </section>
-          )}
-        </>
-      )}
+            ))}
+          </section>
+        );
+      })}
+
+      <section className="mx-auto w-full max-w-[1280px] px-0">
+        <AdBlock
+          label="தலைப்பு விளம்பரம்"
+          size="728×90"
+          variant="leaderboard"
+        />
+      </section>
+
+      <section className="mx-auto w-full max-w-[1280px] border border-[#c6c6cd] bg-white">
+        <SectionTitle
+          title={INTERNATIONAL_CATEGORY}
+          link={`/?category=${encodeURIComponent(INTERNATIONAL_CATEGORY)}`}
+        />
+        <div className="p-7">
+          <div className="grid gap-8 md:grid-cols-3">
+            {internationalStories.map((article) => (
+              <Link
+                href={articleHref(article)}
+                key={article.id}
+                className="group flex cursor-pointer flex-col gap-4"
+              >
+                <div className="aspect-[4/3] overflow-hidden">
+                  {articleImage(
+                    article,
+                    "h-full w-full object-cover grayscale transition duration-700 group-hover:grayscale-0"
+                  )}
+                </div>
+                <h3 className="font-serif text-[18px] font-black leading-tight text-[#76859b] group-hover:underline">
+                  {article.title}
+                </h3>
+                <p className="line-clamp-2 text-[15px] leading-6 text-[#45464d]">
+                  {articleExcerpt(article)}
+                </p>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
     </main>
   );
 }

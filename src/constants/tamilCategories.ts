@@ -16,4 +16,17 @@ export const TAMIL_NEWS_CATEGORIES = [
   "மதம் & கலாச்சாரம்",
 ] as const;
 
+export const PRIMARY_TAMIL_CATEGORIES = [
+  "அரசியல்",
+  "தொழில்நுட்பம்",
+  "வணிகம்",
+  "கல்வி",
+  "மதம் & கலாச்சாரம்",
+] as const;
+
+export const OTHER_TAMIL_CATEGORIES = TAMIL_NEWS_CATEGORIES.filter(
+  (category) =>
+    !(PRIMARY_TAMIL_CATEGORIES as readonly string[]).includes(category)
+);
+
 export type TamilNewsCategory = (typeof TAMIL_NEWS_CATEGORIES)[number];

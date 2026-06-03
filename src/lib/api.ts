@@ -1,4 +1,7 @@
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/+$/, "");
+const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || "").replace(
+  /\/+$/,
+  ""
+);
 
 function apiUrl(input: string): string {
   if (/^https?:\/\//i.test(input) || !API_BASE_URL) return input;
@@ -101,4 +104,12 @@ export async function fetchNewsList<T>(
     throw new Error("Expected a JSON array from /api/news");
   }
   return data as T[];
+}
+
+export async function fetchPopularNews<T>(limit: number): Promise<T[]> {
+  try {
+    return await fetchJson<T[]>(`/api/news/popular?limit=${limit}`);
+  } catch {
+    return fetchJson<T[]>(`/api/news?sort=popular&limit=${limit}`);
+  }
 }
