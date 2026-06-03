@@ -32,7 +32,7 @@ const viewedArticleIds = new Set<string>();
 
 export default function ArticlePage() {
   const params = useParams<{ id: string }>();
-  const id = params.id;
+  const id = params?.id ?? "";
   const [article, setArticle] = useState<ArticleDetail | null>(null);
   const [related, setRelated] = useState<NewsItem[]>([]);
   const [trending, setTrending] = useState<NewsItem[]>([]);

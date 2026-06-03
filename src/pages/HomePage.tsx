@@ -127,7 +127,7 @@ function SectionTitle({
 
 export default function HomePage() {
   const searchParams = useSearchParams();
-  const categoryParam = searchParams.get("category")?.trim() ?? "";
+  const categoryParam = searchParams?.get("category")?.trim() ?? "";
   const categoryFilter =
     categoryParam &&
     (TAMIL_NEWS_CATEGORIES as readonly string[]).includes(categoryParam)

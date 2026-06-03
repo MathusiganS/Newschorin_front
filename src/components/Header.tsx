@@ -18,7 +18,7 @@ const NAV_ITEMS = [
 
 export default function Header() {
   const searchParams = useSearchParams();
-  const activeCategory = searchParams.get("category") ?? "";
+  const activeCategory = searchParams?.get("category") ?? "";
   const otherActive = OTHER_TAMIL_CATEGORIES.includes(
     activeCategory as (typeof OTHER_TAMIL_CATEGORIES)[number]
   );
