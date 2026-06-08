@@ -285,7 +285,9 @@ export default function HomePage() {
   }
 
   const featured = articles[0];
-  const latest = articles.slice(1, 5);
+  const latestArticles = articles.slice(1);
+  const latest = latestArticles.slice(0, 4);
+  const hasMoreLatest = latestArticles.length > latest.length;
   const trending = trendingArticles.slice(0, 4);
   const internationalStories = categorySourceArticles
     .filter(isInternationalArticle)
@@ -453,6 +455,9 @@ export default function HomePage() {
                           <h4 className="text-[16px] font-black leading-tight text-black group-hover:underline">
                             {article.title}
                           </h4>
+                          <p className="mt-2 line-clamp-2 text-[13px] font-semibold leading-5 text-[#45464d]">
+                            {articleExcerpt(article)}
+                          </p>
                           <span className="mt-2 block text-[13px] font-semibold text-[#76777d]">
                             {formatDate(article.created_at)}
                           </span>
@@ -490,24 +495,27 @@ export default function HomePage() {
       <section className="mx-auto w-full max-w-[1280px] border-x border-b border-[#c6c6cd] bg-white">
         <Link
           href={articleHref(featured)}
-          className="group grid lg:grid-cols-5"
+          className="group grid text-black lg:grid-cols-5"
         >
-          <div className="relative h-[220px] overflow-hidden lg:col-span-2">
+          <div className="relative h-[260px] overflow-hidden lg:col-span-2">
             {articleImage(
               featured,
               "h-full w-full object-cover grayscale transition duration-700 group-hover:grayscale-0"
             )}
-            <span className="absolute left-6 top-6 bg-[#bb0112] px-3 py-1 text-[11px] font-black tracking-wide text-white">
+            <span className="absolute left-6 top-6 bg-white px-3 py-1 text-[11px] font-black tracking-wide text-black transition-colors group-hover:text-[#bb0112] group-active:text-[#bb0112]">
               முக்கிய செய்தி
             </span>
           </div>
-          <div className="flex h-[220px] flex-col justify-center p-8 lg:col-span-3 lg:p-10">
-            <span className="mb-4 text-[11px] font-black tracking-[0.14em] text-[#bb0112]">
+          <div className="flex min-h-[260px] flex-col justify-center p-8 lg:col-span-3 lg:p-10">
+            <span className="mb-4 text-[11px] font-black tracking-[0.14em] text-[#bd1414]">
               {featured.category_ta || "செய்திகள்"}
             </span>
-            <h1 className="font-serif text-[30px] font-black leading-[1.02] text-[#bb0112] transition-colors group-hover:text-black md:text-[36px]">
+            <h1 className="font-serif text-[30px] font-black leading-[1.02] text-black transition-colors group-hover:text-[#bb0112] group-active:text-[#bb0112] md:text-[36px]">
               {featured.title}
             </h1>
+            <p className="mt-4 line-clamp-2 text-[15px] font-semibold leading-6 text-[#45464d]">
+              {articleExcerpt(featured)}
+            </p>
             <div className="mt-5 border-t border-[#c6c6cd] pt-3">
               <p className="text-xs font-black text-black">
                 {featured.category_ta || "செய்திகள்"}
@@ -526,7 +534,14 @@ export default function HomePage() {
             <h2 className="font-serif text-2xl font-black">
               சமீபத்திய செய்திகள்
             </h2>
-            {categoryFilter ? (
+            {hasMoreLatest ? (
+              <Link
+                href="/latest"
+                className="text-[11px] font-black text-black transition-colors hover:text-[#bb0112]"
+              >
+                அனைத்தும்
+              </Link>
+            ) : categoryFilter ? (
               <Link
                 href="/"
                 className="text-[11px] font-black text-[#bb0112] hover:underline"
@@ -541,7 +556,7 @@ export default function HomePage() {
               <Link
                 key={article.id}
                 href={articleHref(article)}
-                className={`group min-h-[255px] border-b border-[#c6c6cd] p-7 transition-colors hover:bg-[#f0f4f8] ${
+                className={`group min-h-[285px] border-b border-[#c6c6cd] p-7 transition-colors hover:bg-[#f0f4f8] ${
                   index % 2 === 0 ? "md:border-r md:border-[#c6c6cd]" : ""
                 }`}
               >
@@ -559,6 +574,9 @@ export default function HomePage() {
                 <h3 className="font-serif text-[22px] font-black leading-tight group-hover:underline">
                   {article.title}
                 </h3>
+                <p className="mt-3 line-clamp-2 text-[14px] font-semibold leading-6 text-[#45464d]">
+                  {articleExcerpt(article)}
+                </p>
                 <p className="mt-4 text-sm font-semibold text-[#76859b]">
                   {formatDate(article.created_at)}
                 </p>
@@ -643,7 +661,7 @@ export default function HomePage() {
                         <Link
                           key={article.id}
                           href={articleHref(article)}
-                          className={`min-h-[210px] p-7 transition-colors hover:bg-[#f0f4f8] ${
+                          className={`min-h-[245px] p-7 transition-colors hover:bg-[#f0f4f8] ${
                             articleIndex === 0
                               ? "border-b border-[#c6c6cd] md:border-b-0 md:border-r"
                               : ""
@@ -655,6 +673,9 @@ export default function HomePage() {
                           <h3 className="font-serif text-[20px] font-black leading-tight">
                             {article.title}
                           </h3>
+                          <p className="mt-3 line-clamp-2 text-[14px] font-semibold leading-6 text-[#45464d]">
+                            {articleExcerpt(article)}
+                          </p>
                           <p className="mt-5 text-sm font-black text-[#76859b]">
                             {formatDate(article.created_at)}
                           </p>

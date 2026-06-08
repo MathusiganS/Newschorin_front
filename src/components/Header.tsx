@@ -120,11 +120,11 @@ export default function Header() {
           </button>
           <Link
             href="/admin"
-            className="hidden h-9 items-center border border-[#c6c6cd] px-5 text-[11px] font-black text-black transition-colors hover:border-black sm:flex"
+            className="hidden"
           >
             உள்நுழை
           </Link>
-          <button className="h-9 bg-black px-5 text-[11px] font-black text-white transition-colors hover:bg-[#bb0112]">
+          <button className="hidden">
             சந்தா
           </button>
         </div>
