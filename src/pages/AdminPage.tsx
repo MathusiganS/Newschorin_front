@@ -5,6 +5,7 @@ import Link from "next/link";
 
 import { TAMIL_NEWS_CATEGORIES } from "../constants/tamilCategories";
 import { fetchAdminJson } from "../lib/api";
+import { formatSriLankaDate } from "../lib/datetime";
 
 type AdminStatus = "pending" | "approved" | "rejected";
 
@@ -91,6 +92,16 @@ function formatRelativeTime(iso: string) {
   if (hours < 24) return `${hours}h ago`;
   const days = Math.floor(hours / 24);
   return `${days}d ago`;
+}
+
+function formatSriLankaDateTime(iso: string) {
+  return formatSriLankaDate(iso, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 export default function AdminPage() {
@@ -516,6 +527,7 @@ export default function AdminPage() {
                       </div>
                       <div className="flex items-center gap-4 text-[11px] text-on-surface-variant">
                         <span>{formatRelativeTime(item.created_at)}</span>
+                        <span>{formatSriLankaDateTime(item.created_at)}</span>
                         <span className="material-symbols-outlined text-[18px]">more_horiz</span>
                       </div>
                     </button>
@@ -759,7 +771,7 @@ export default function AdminPage() {
                       </select>
                     </div>
                     <div>
-                      <label className="text-xs text-on-surface-variant">Created At (IST)</label>
+                      <label className="text-xs text-on-surface-variant">Created At (Sri Lanka)</label>
                       <input
                         className="mt-2 w-full border border-outline-variant rounded-lg px-3 py-2 text-sm"
                         value={activeItem.created_at}

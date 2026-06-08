@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 
 import { fetchJson, fetchNewsList, fetchPopularNews } from "../lib/api";
+import { formatSriLankaDate } from "../lib/datetime";
 
 interface ArticleDetail {
   id: number;
@@ -181,7 +182,7 @@ export default function ArticlePage() {
     .map((p) => p.trim())
     .filter((p) => p.length > 0);
 
-  const formattedDate = new Date(article.created_at).toLocaleString("ta-LK", {
+  const formattedDate = formatSriLankaDate(article.created_at, {
     year: "numeric",
     month: "long",
     day: "numeric",
@@ -412,7 +413,7 @@ export default function ArticlePage() {
                             {item.title}
                           </h4>
                           <p className="mt-1 text-[13px] font-semibold text-[#45464d]">
-                            {new Date(item.created_at).toLocaleString("ta-LK", {
+                            {formatSriLankaDate(item.created_at, {
                               month: "short",
                               day: "numeric",
                               hour: "2-digit",
@@ -467,7 +468,7 @@ export default function ArticlePage() {
                       {item.title}
                     </h3>
                     <p className="mt-auto pt-4 text-[13px] font-semibold text-[#45464d]">
-                      {new Date(item.created_at).toLocaleString("ta-LK", {
+                      {formatSriLankaDate(item.created_at, {
                         month: "short",
                         day: "numeric",
                         hour: "2-digit",

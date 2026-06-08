@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 
 import { TAMIL_NEWS_CATEGORIES } from "../constants/tamilCategories";
 import { fetchNewsList, fetchPopularNews } from "../lib/api";
+import { formatSriLankaDate, sriLankaTimeValue } from "../lib/datetime";
 
 interface NewsItem {
   id: number;
@@ -29,7 +30,7 @@ function articleHref(article: NewsItem) {
 }
 
 function formatDate(date: string) {
-  return new Date(date).toLocaleString("ta-LK", {
+  return formatSriLankaDate(date, {
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -309,9 +310,7 @@ export default function HomePage() {
       .sort((a, b) => {
         const viewDiff = (b.view_count ?? 0) - (a.view_count ?? 0);
         if (viewDiff !== 0) return viewDiff;
-        return (
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        );
+        return sriLankaTimeValue(b.created_at) - sriLankaTimeValue(a.created_at);
       })
       .slice(0, 5);
 
