@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
 import { TAMIL_NEWS_CATEGORIES } from "../constants/tamilCategories";
-import { fetchAdminJson } from "../lib/api";
+import { fetchAdminJson, loginAdmin, logoutAdmin } from "../lib/api";
 import { formatSriLankaDate } from "../lib/datetime";
 
 type AdminStatus = "pending" | "approved" | "rejected";
@@ -29,6 +29,11 @@ interface AdminNewsItem {
 type OriginalPreview = {
   label: string;
   value: string;
+};
+
+type Feedback = {
+  type: "success" | "error" | "info";
+  message: string;
 };
 
 const STATUS_TABS: Array<{
@@ -82,6 +87,14 @@ const CATEGORY_NAV = [
 
 const PAGE_SIZES = [10, 20, 30];
 
+const NEWS_SOURCES = [
+  { value: "all", label: "All sources" },
+  { value: "tamilwin", label: "Tamilwin" },
+  { value: "virakesari", label: "Virakesari" },
+  { value: "lankasri", label: "Lankasri" },
+  { value: "newswire", label: "Newswire" },
+] as const;
+
 function formatRelativeTime(iso: string) {
   const dt = new Date(iso);
   if (Number.isNaN(dt.getTime())) return "";
@@ -104,12 +117,34 @@ function formatSriLankaDateTime(iso: string) {
   });
 }
 
+function safeArticleUrl(value: string): string | null {
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === "http:" || parsed.protocol === "https:"
+      ? parsed.toString()
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+function isAuthError(message: string) {
+  const normalized = message.toLowerCase();
+  return (
+    normalized.includes("401") ||
+    normalized.includes("not authenticated") ||
+    normalized.includes("invalid or expired session") ||
+    normalized.includes("invalid admin credentials")
+  );
+}
+
 export default function AdminPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [authed, setAuthed] = useState(false);
   const [statusFilter, setStatusFilter] = useState<AdminStatus>("pending");
   const [categoryFilter, setCategoryFilter] = useState<string>("admin");
+  const [sourceFilter, setSourceFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [items, setItems] = useState<AdminNewsItem[]>([]);
   const [counts, setCounts] = useState<StatusCounts>({
@@ -122,19 +157,31 @@ export default function AdminPage() {
   const [activeItem, setActiveItem] = useState<AdminNewsItem | null>(null);
   const [originalPreview, setOriginalPreview] = useState<OriginalPreview | null>(null);
   const [saving, setSaving] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [pendingImageData, setPendingImageData] = useState<string | null>(null);
+  const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(PAGE_SIZES[0]);
 
   useEffect(() => {
     queueMicrotask(() => {
-      setAuthed(!!localStorage.getItem("adminAuth"));
+      setAuthed(true);
     });
   }, []);
 
-  const loadItems = useCallback((filter: AdminStatus) => {
+  useEffect(() => {
+    if (!feedback) return;
+    const timeout = window.setTimeout(() => setFeedback(null), 3500);
+    return () => window.clearTimeout(timeout);
+  }, [feedback]);
+
+  const loadItems = useCallback((filter: AdminStatus, source = sourceFilter) => {
     setLoading(true);
     setLoadError(null);
-    fetchAdminJson<AdminNewsItem[]>(`/api/admin/news?status=${filter}`)
+    const params = new URLSearchParams({ status: filter });
+    if (source !== "all") params.set("source", source);
+    fetchAdminJson<AdminNewsItem[]>(`/api/admin/news?${params.toString()}`)
       .then((data) => {
         setItems(data);
         setPage(1);
@@ -146,19 +193,24 @@ export default function AdminPage() {
       .catch((e: unknown) => {
         const msg = e instanceof Error ? e.message : "Failed to load admin data";
         setLoadError(msg);
-        if (msg.toLowerCase().includes("401")) {
-          localStorage.removeItem("adminAuth");
+        if (isAuthError(msg)) {
           setAuthed(false);
+          setItems([]);
+          setActiveItem(null);
         }
       })
       .finally(() => setLoading(false));
-  }, []);
+  }, [sourceFilter]);
 
   const loadCounts = useCallback(() => {
+    const sourceQuery =
+      sourceFilter === "all"
+        ? ""
+        : `&source=${encodeURIComponent(sourceFilter)}`;
     Promise.all([
-      fetchAdminJson<AdminNewsItem[]>("/api/admin/news?status=pending"),
-      fetchAdminJson<AdminNewsItem[]>("/api/admin/news?status=approved"),
-      fetchAdminJson<AdminNewsItem[]>("/api/admin/news?status=rejected"),
+      fetchAdminJson<AdminNewsItem[]>(`/api/admin/news?status=pending${sourceQuery}`),
+      fetchAdminJson<AdminNewsItem[]>(`/api/admin/news?status=approved${sourceQuery}`),
+      fetchAdminJson<AdminNewsItem[]>(`/api/admin/news?status=rejected${sourceQuery}`),
     ])
       .then(([pending, approved, rejected]) => {
         setCounts({
@@ -170,7 +222,7 @@ export default function AdminPage() {
       .catch(() => {
         setCounts({ pending: 0, approved: 0, rejected: 0 });
       });
-  }, []);
+  }, [sourceFilter]);
 
   useEffect(() => {
     if (!authed) return;
@@ -182,15 +234,29 @@ export default function AdminPage() {
 
   const onLogin = (event: React.FormEvent) => {
     event.preventDefault();
-    const token = btoa(`${username}:${password}`);
-    localStorage.setItem("adminAuth", token);
-    setAuthed(true);
-    setUsername("");
-    setPassword("");
+    setSaving(true);
+    setLoadError(null);
+    setFeedback({ type: "info", message: "Signing in..." });
+    loginAdmin(username, password)
+      .then(() => {
+        setAuthed(true);
+        setUsername("");
+        setPassword("");
+        setFeedback({ type: "success", message: "Signed in successfully." });
+      })
+      .catch((e: unknown) => {
+        const message = e instanceof Error ? e.message : "Sign in failed";
+        setLoadError(message);
+        setFeedback({ type: "error", message });
+      })
+      .finally(() => setSaving(false));
   };
 
   const onLogout = () => {
-    localStorage.removeItem("adminAuth");
+    setFeedback({ type: "info", message: "Signing out..." });
+    logoutAdmin().catch(() => {
+      // Even if the server is unreachable, clear the local admin view.
+    });
     setAuthed(false);
     setItems([]);
     setActiveItem(null);
@@ -198,17 +264,25 @@ export default function AdminPage() {
 
   const updateStatus = (id: number, status: AdminStatus) => {
     setSaving(true);
+    setFeedback({ type: "info", message: "Updating article status..." });
     fetchAdminJson(`/api/admin/news/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status }),
     })
       .then(() => {
+        setFeedback({
+          type: "success",
+          message: status === "approved" ? "Article approved." : "Article rejected.",
+        });
         loadItems(statusFilter);
         loadCounts();
       })
       .catch((e: unknown) => {
-        setLoadError(e instanceof Error ? e.message : "Failed to update status");
+        const message = e instanceof Error ? e.message : "Failed to update status";
+        setLoadError(message);
+        setFeedback({ type: "error", message });
+        if (isAuthError(message)) setAuthed(false);
       })
       .finally(() => setSaving(false));
   };
@@ -217,13 +291,21 @@ export default function AdminPage() {
     event.preventDefault();
     if (!activeItem) return;
     setSaving(true);
-    fetchAdminJson(`/api/admin/news/${activeItem.id}`, {
+    setLoadError(null);
+    setSaveMessage(null);
+    setFeedback({ type: "info", message: "Saving changes..." });
+    fetchAdminJson<{
+      ok: boolean;
+      image?: string;
+      image_path?: string;
+    }>(`/api/admin/news/${activeItem.id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         title: activeItem.title,
         url: activeItem.url,
         image_path: activeItem.image_path,
+        image_data: pendingImageData,
         full_text: activeItem.full_text,
         source: activeItem.source,
         category_ta: activeItem.category_ta || "",
@@ -231,14 +313,96 @@ export default function AdminPage() {
         created_at: activeItem.created_at,
       }),
     })
-      .then(() => {
+      .then(async (saved) => {
+        if (!saved.ok) throw new Error("The server did not confirm the update.");
+        const committed = await fetchAdminJson<AdminNewsItem>(
+          `/api/admin/news/${activeItem.id}?updated=${Date.now()}`,
+          { cache: "no-store" }
+        );
+
+        if (
+          pendingImageData &&
+          (!committed.image_path || committed.image_path === activeItem.image_path)
+        ) {
+          throw new Error(
+            "The running backend is outdated and did not store the image. Deploy the latest tamilwin_scraper backend and try again."
+          );
+        }
+
+        setActiveItem(committed);
+        setPendingImageData(null);
+        setSaveMessage("Changes saved successfully.");
+        setFeedback({ type: "success", message: "Changes saved successfully." });
         loadItems(statusFilter);
         loadCounts();
       })
       .catch((e: unknown) => {
-        setLoadError(e instanceof Error ? e.message : "Failed to save changes");
+        const message = e instanceof Error ? e.message : "Failed to save changes";
+        setLoadError(message);
+        setFeedback({ type: "error", message });
+        if (isAuthError(message)) setAuthed(false);
       })
       .finally(() => setSaving(false));
+  };
+
+  const onImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file || !activeItem) return;
+
+    const allowedTypes = [
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+      "image/gif",
+      "image/avif",
+    ];
+    if (!allowedTypes.includes(file.type)) {
+      const message = "Choose a JPG, PNG, WebP, GIF, or AVIF image.";
+      setLoadError(message);
+      setFeedback({ type: "error", message });
+      return;
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      const message = "Image must be 8 MB or smaller.";
+      setLoadError(message);
+      setFeedback({ type: "error", message });
+      return;
+    }
+
+    setUploadingImage(true);
+    setLoadError(null);
+    setSaveMessage(null);
+    const reader = new FileReader();
+    reader.onload = () => {
+      const imageData = typeof reader.result === "string" ? reader.result : "";
+      if (!imageData) {
+        setLoadError("Could not read the selected image.");
+        setFeedback({ type: "error", message: "Could not read the selected image." });
+        setUploadingImage(false);
+        return;
+      }
+      setPendingImageData(imageData);
+      setFeedback({
+        type: "success",
+        message: "Image selected. Click Save Changes to update the article.",
+      });
+      setActiveItem((current) =>
+        current
+          ? {
+              ...current,
+              image: imageData,
+            }
+          : current
+      );
+      setUploadingImage(false);
+    };
+    reader.onerror = () => {
+      setLoadError("Could not read the selected image.");
+      setFeedback({ type: "error", message: "Could not read the selected image." });
+      setUploadingImage(false);
+    };
+    reader.readAsDataURL(file);
   };
 
   const filteredItems = useMemo(() => {
@@ -274,6 +438,11 @@ export default function AdminPage() {
           <h1 className="font-display-lg text-display-lg text-on-surface mb-4">
             Admin Login
           </h1>
+          {loadError ? (
+            <div className="mb-4 rounded-DEFAULT border border-error-container bg-error-container px-3 py-2 text-sm text-on-error-container">
+              {loadError}
+            </div>
+          ) : null}
           <label className="font-label-caps text-label-caps text-on-surface-variant mb-2 block">
             Username
           </label>
@@ -358,7 +527,10 @@ export default function AdminPage() {
               <button
                 key={cat.value}
                 type="button"
-                onClick={() => setCategoryFilter(cat.value)}
+                onClick={() => {
+                  setCategoryFilter(cat.value);
+                  setPage(1);
+                }}
                 className={className}
               >
                 {content}
@@ -413,7 +585,10 @@ export default function AdminPage() {
                   placeholder="Search articles..."
                   type="text"
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setPage(1);
+                  }}
                 />
                 <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-secondary text-[18px]">
                   search
@@ -423,6 +598,7 @@ export default function AdminPage() {
             <button
               type="button"
               onClick={() => {
+                setFeedback({ type: "info", message: "Refreshing articles..." });
                 loadItems(statusFilter);
                 loadCounts();
               }}
@@ -446,19 +622,47 @@ export default function AdminPage() {
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-3">
-              {STATUS_TABS.map((tab) => (
-                <button
-                  key={tab.value}
-                  type="button"
-                  onClick={() => setStatusFilter(tab.value)}
-                  className={`px-4 py-2 rounded-lg border text-sm font-medium shadow-sm ${tab.className} ${
-                    statusFilter === tab.value ? "ring-2 ring-primary/20" : "opacity-80"
-                  }`}
-                >
-                  {tab.label} ({counts[tab.value]})
-                </button>
-              ))}
+            <div className="flex flex-wrap items-end justify-between gap-4">
+              <div className="flex flex-wrap items-center gap-3">
+                {STATUS_TABS.map((tab) => (
+                  <button
+                    key={tab.value}
+                    type="button"
+                    onClick={() => setStatusFilter(tab.value)}
+                    className={`px-4 py-2 rounded-lg border text-sm font-medium shadow-sm ${tab.className} ${
+                      statusFilter === tab.value ? "ring-2 ring-primary/20" : "opacity-80"
+                    }`}
+                  >
+                    {tab.label} ({counts[tab.value]})
+                  </button>
+                ))}
+              </div>
+
+              <label className="flex min-w-[220px] flex-col gap-1.5">
+                <span className="text-xs font-semibold uppercase tracking-wide text-on-surface-variant">
+                  News source
+                </span>
+                <span className="relative">
+                  <span className="material-symbols-outlined pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[19px] text-secondary">
+                    source
+                  </span>
+                  <select
+                    value={sourceFilter}
+                    onChange={(event) => setSourceFilter(event.target.value)}
+                    className="h-10 w-full appearance-none rounded-lg border border-outline-variant bg-white pl-10 pr-10 text-sm font-medium text-on-surface shadow-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+                    aria-label="Filter articles by news source"
+                  >
+                    {NEWS_SOURCES.map((source) => (
+                      <option key={source.value} value={source.value}>
+                        {source.label}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="material-symbols-outlined pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[18px] text-secondary">
+                    expand_more
+                  </span>
+                </span>
+              </label>
             </div>
 
             {loadError ? (
@@ -470,7 +674,7 @@ export default function AdminPage() {
             <div className="bg-white border border-outline-variant rounded-2xl shadow-sm">
               <div className="px-5 py-4 border-b border-outline-variant">
                 <h2 className="text-sm font-semibold text-on-surface">
-                  Pending Articles ({filteredItems.length})
+                  {STATUS_TABS.find((tab) => tab.value === statusFilter)?.label} Articles ({filteredItems.length})
                 </h2>
               </div>
               <div className="divide-y divide-outline-variant">
@@ -485,7 +689,10 @@ export default function AdminPage() {
                     <button
                       key={item.id}
                       type="button"
-                      onClick={() => setActiveItem(item)}
+                      onClick={() => {
+                        setPendingImageData(null);
+                        setActiveItem(item);
+                      }}
                       className="w-full flex items-start gap-4 px-5 py-4 hover:bg-surface-container-low transition-colors text-left"
                     >
                       <div className="w-14 h-14 rounded-lg overflow-hidden bg-surface-container-low border border-outline-variant">
@@ -602,23 +809,26 @@ export default function AdminPage() {
                 <button
                   type="button"
                   onClick={() => updateStatus(activeItem.id, "approved")}
-                  className="px-4 py-2 rounded-lg bg-green-600 text-white text-sm font-semibold"
+                  disabled={saving}
+                  className="px-4 py-2 rounded-lg bg-green-600 text-white text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   Approve
                 </button>
                 <button
                   type="button"
                   onClick={() => updateStatus(activeItem.id, "rejected")}
-                  className="px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-semibold"
+                  disabled={saving}
+                  className="px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   Reject
                 </button>
                 <button
                   type="button"
                   onClick={onSave}
-                  className="px-4 py-2 rounded-lg bg-primary text-on-primary text-sm font-semibold"
+                  disabled={saving || uploadingImage}
+                  className="px-4 py-2 rounded-lg bg-primary text-on-primary text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  Save Changes
+                  {saving ? "Saving..." : "Save Changes"}
                 </button>
               </div>
             </div>
@@ -630,6 +840,18 @@ export default function AdminPage() {
             >
               ← Back to list
             </button>
+
+            {loadError ? (
+              <div className="mt-4 border border-error-container bg-error-container text-on-error-container px-4 py-3 rounded-lg text-sm">
+                {loadError}
+              </div>
+            ) : null}
+
+            {saveMessage ? (
+              <div className="mt-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-800">
+                {saveMessage}
+              </div>
+            ) : null}
 
             {activeItem ? (
               <form onSubmit={onSave} className="mt-6 grid grid-cols-1 xl:grid-cols-[1fr_2fr] gap-6">
@@ -652,36 +874,51 @@ export default function AdminPage() {
                     )}
                   </div>
                   <div className="mt-3 flex items-center gap-3">
+                    <label className={`cursor-pointer px-3 py-2 rounded-lg border border-outline-variant text-sm font-medium ${
+                      uploadingImage ? "pointer-events-none opacity-60" : "hover:bg-surface-container-low"
+                    }`}>
+                      {uploadingImage ? "Uploading..." : "Choose Image"}
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
+                        onChange={onImageUpload}
+                        className="sr-only"
+                        disabled={uploadingImage}
+                      />
+                    </label>
                     <button
                       type="button"
-                      className="px-3 py-2 rounded-lg border border-outline-variant text-sm"
-                    >
-                      Change Image
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() =>
+                      onClick={() => {
+                        setPendingImageData(null);
+                        setSaveMessage(null);
                         setActiveItem({
                           ...activeItem,
+                          image: "",
                           image_path: "",
-                        })
-                      }
+                        });
+                      }}
                       className="px-3 py-2 rounded-lg text-sm text-red-500"
                     >
                       Remove
                     </button>
                   </div>
                   <div className="mt-4">
-                    <label className="text-xs text-on-surface-variant">Image URL</label>
+                    <label className="text-xs text-on-surface-variant">
+                      Or paste an image URL
+                    </label>
                     <input
                       className="mt-2 w-full border border-outline-variant rounded-lg px-3 py-2 text-sm"
                       value={activeItem.image_path}
-                      onChange={(e) =>
+                      placeholder="https://example.com/image.jpg"
+                      onChange={(e) => {
+                        setPendingImageData(null);
+                        setSaveMessage(null);
                         setActiveItem({
                           ...activeItem,
                           image_path: e.target.value,
-                        })
-                      }
+                          image: e.target.value,
+                        });
+                      }}
                     />
                   </div>
                 </div>
@@ -712,7 +949,22 @@ export default function AdminPage() {
                     />
                   </div>
                   <div>
-                    <label className="text-xs text-on-surface-variant">URL *</label>
+                    <div className="flex items-center justify-between gap-3">
+                      <label className="text-xs text-on-surface-variant">URL *</label>
+                      {safeArticleUrl(activeItem.url) ? (
+                        <a
+                          href={safeArticleUrl(activeItem.url) ?? undefined}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
+                        >
+                          Open article
+                          <span className="material-symbols-outlined text-[15px]">
+                            open_in_new
+                          </span>
+                        </a>
+                      ) : null}
+                    </div>
                     <input
                       className="mt-2 w-full border border-outline-variant rounded-lg px-3 py-2 text-sm"
                       value={activeItem.url}
@@ -830,6 +1082,36 @@ export default function AdminPage() {
           </section>
         )}
       </main>
+      {feedback ? (
+        <div
+          role="status"
+          aria-live="polite"
+          className={`fixed right-5 top-5 z-[70] flex max-w-sm items-start gap-3 rounded-xl border px-4 py-3 text-sm font-semibold shadow-xl ${
+            feedback.type === "success"
+              ? "border-green-200 bg-green-50 text-green-800"
+              : feedback.type === "error"
+                ? "border-red-200 bg-red-50 text-red-800"
+                : "border-blue-200 bg-blue-50 text-blue-800"
+          }`}
+        >
+          <span className="material-symbols-outlined text-[20px]">
+            {feedback.type === "success"
+              ? "check_circle"
+              : feedback.type === "error"
+                ? "error"
+                : "info"}
+          </span>
+          <span className="leading-5">{feedback.message}</span>
+          <button
+            type="button"
+            onClick={() => setFeedback(null)}
+            className="material-symbols-outlined ml-1 text-[18px] opacity-70 hover:opacity-100"
+            aria-label="Dismiss notification"
+          >
+            close
+          </button>
+        </div>
+      ) : null}
       {originalPreview ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
           <div className="w-full max-w-3xl max-h-[80vh] overflow-hidden rounded-2xl bg-white shadow-xl border border-outline-variant">

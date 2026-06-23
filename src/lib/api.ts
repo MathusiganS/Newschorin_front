@@ -4,8 +4,8 @@ const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL || "").replace(
 );
 
 function apiUrl(input: string): string {
-  if (/^https?:\/\//i.test(input) || !API_BASE_URL) return input;
-  return `${API_BASE_URL}${input.startsWith("/") ? input : `/${input}`}`;
+  if (/^https?:\/\//i.test(input)) return input;
+  return input.startsWith("/") ? input : `/${input}`;
 }
 
 function backendUrl(input: string): string {
@@ -35,6 +35,7 @@ function normalizeBackendUrls<T>(value: T): T {
 export async function fetchJson<T>(input: string, init?: RequestInit): Promise<T> {
   const res = await fetch(apiUrl(input), {
     ...init,
+    credentials: "include",
     headers: {
       Accept: "application/json",
       ...init?.headers,
@@ -67,21 +68,24 @@ export async function fetchJson<T>(input: string, init?: RequestInit): Promise<T
   }
 }
 
-export function getAdminAuthHeader(): Record<string, string> {
-  const token = localStorage.getItem("adminAuth") || "";
-  return token ? { Authorization: `Basic ${token}` } : {};
-}
-
 export async function fetchAdminJson<T>(
   input: string,
   init?: RequestInit
 ): Promise<T> {
-  return fetchJson<T>(input, {
-    ...init,
-    headers: {
-      ...getAdminAuthHeader(),
-      ...init?.headers,
-    },
+  return fetchJson<T>(input, init);
+}
+
+export async function loginAdmin(username: string, password: string) {
+  return fetchJson<{ ok: boolean }>("/api/admin/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, password }),
+  });
+}
+
+export async function logoutAdmin() {
+  return fetchJson<{ ok: boolean }>("/api/admin/logout", {
+    method: "POST",
   });
 }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 
@@ -29,7 +29,30 @@ interface NewsItem {
   view_count?: number;
 }
 
-const viewedArticleIds = new Set<string>();
+function groupArticleIntoParagraphs(text: string, sentencesPerParagraph = 3) {
+  const normalized = text.replace(/\s+/g, " ").trim();
+  if (!normalized) return [];
+
+  let sentences: string[] = [];
+  if (typeof Intl.Segmenter === "function") {
+    const segmenter = new Intl.Segmenter("ta", { granularity: "sentence" });
+    sentences = Array.from(segmenter.segment(normalized), ({ segment }) =>
+      segment.trim()
+    ).filter(Boolean);
+  } else {
+    sentences = (
+      normalized.match(/[^.!?\u0964\u2026]+(?:[.!?\u0964\u2026]+|$)/g) ?? [normalized]
+    )
+      .map((sentence) => sentence.trim())
+      .filter(Boolean);
+  }
+
+  const paragraphs: string[] = [];
+  for (let index = 0; index < sentences.length; index += sentencesPerParagraph) {
+    paragraphs.push(sentences.slice(index, index + sentencesPerParagraph).join(" "));
+  }
+  return paragraphs;
+}
 
 export default function ArticlePage() {
   const params = useParams<{ id: string }>();
@@ -41,6 +64,7 @@ export default function ArticlePage() {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const trackedViewId = useRef<string | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -89,12 +113,14 @@ export default function ArticlePage() {
   }, [id]);
 
   useEffect(() => {
-    if (!id || viewedArticleIds.has(id)) return;
+    if (!id || trackedViewId.current === id) return;
 
-    viewedArticleIds.add(id);
-    fetchJson<{ id: number; view_count: number }>(`/api/news/${id}/view`, {
-      method: "POST",
-    })
+    trackedViewId.current = id;
+    fetchJson<{
+      id: number;
+      view_count: number;
+      last_30_days_view_count: number;
+    }>(`/api/news/${id}/view`, { method: "POST" })
       .then((data) => {
         setArticle((current) =>
           current && String(current.id) === id
@@ -177,10 +203,7 @@ export default function ArticlePage() {
     );
   }
 
-  const paragraphs = article.full_text
-    .split("\n")
-    .map((p) => p.trim())
-    .filter((p) => p.length > 0);
+  const paragraphs = groupArticleIntoParagraphs(article.full_text, 3);
 
   const formattedDate = formatSriLankaDate(article.created_at, {
     year: "numeric",

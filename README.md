@@ -196,7 +196,7 @@ Do **not** use `uvicorn fastapi_app:app` from the repo root (wrong module). From
 **Backend (same paths as before, plus classification):**
 - `GET http://localhost:4000/api/news` — list articles (includes `source`, `category_ta` when set)
 - `GET http://localhost:4000/api/news/{id}` — article detail (`full_text`, `category_ta`, …)
-- `POST http://localhost:4000/api/sync` — import/update rows from `tamilwin_scraper/news.json` into PostgreSQL (classifies missing `category_ta` when models are present)
+- `POST http://localhost:4000/api/sync` — authenticated import/update from `tamilwin_scraper/news.json` into PostgreSQL
 - `POST http://localhost:4000/api/classify` — JSON body `{"text": "..."}` or `{"full_text": "..."}` → `{"category_ta": "..."}` (uses first 70 words)
 - `GET http://localhost:4000/images/...` — static files from `tamilwin_scraper/image/`
 
@@ -274,7 +274,7 @@ npm run dev
 cd tamilwin_scraper
 scrapy crawl tamilwin
 # Optional: push news.json into DB
-curl -X POST http://localhost:4000/api/sync -H "Content-Type: application/json" -d "{}"
+curl -u admin:admin -X POST http://localhost:4000/api/sync -H "Content-Type: application/json" -d "{}"
 ```
 
 ### Day-to-day
@@ -335,7 +335,9 @@ GET /api/news/{id}
 ```
 POST /api/sync
 ```
-Body can be empty JSON `{}`. Reads `tamilwin_scraper/news.json` and upserts by `url`.
+Body can be empty JSON `{}`. HTTP Basic admin credentials or `X-API-Key`
+authentication is required. The endpoint reads `tamilwin_scraper/news.json`
+and upserts by `url`.
 
 ### Classify snippet
 ```
@@ -419,7 +421,9 @@ lsof -ti:5173 | xargs kill -9
 
 ## 📝 Environment Variables
 
-**Backend (Python):** optional `DATABASE_URL` for PostgreSQL (full URL). Default matches local `postgres` / `news_techorin`. Optional `TAMILNEWS_MODEL_DIR` to override the folder containing `tamil_news_classifier.pkl` and `label_encoder.pkl`.
+**Backend (Python):** configuration is documented in
+`tamilwin_scraper/.env.example`, including PostgreSQL, CORS, admin credentials,
+the scheduler API key, Gemini, and classifier settings.
 
 **Frontend:** dev server proxies `/api` and `/images` to port 4000 via `vite.config.ts`; no `.env` required for local use unless you change that.
 
