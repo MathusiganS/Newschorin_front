@@ -2,7 +2,7 @@ import { Suspense } from "react";
 
 import Footer from "../../components/Footer";
 import Header from "../../components/Header";
-import LatestPage from "../../pages/LatestPage";
+import LatestPage from "@/views/LatestPage";
 
 export default function Page() {
   return (

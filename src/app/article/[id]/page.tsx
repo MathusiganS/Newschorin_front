@@ -2,7 +2,7 @@ import { Suspense } from "react";
 
 import Footer from "../../../components/Footer";
 import Header from "../../../components/Header";
-import ArticlePage from "../../../pages/ArticlePage";
+import ArticlePage from "@/views/ArticlePage";
 
 export default function Page() {
   return (
