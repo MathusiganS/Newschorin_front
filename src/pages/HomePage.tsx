@@ -24,6 +24,8 @@ const SECTION_ROWS = [
 ] as const;
 
 const INTERNATIONAL_CATEGORY = "சர்வதேசம்";
+const HOME_FEED_LIMIT = 16;
+const HOME_SECTION_POOL_LIMIT = 60;
 
 function articleHref(article: NewsItem) {
   return `/article/${article.id}`;
@@ -129,6 +131,7 @@ function SectionTitle({
 export default function HomePage() {
   const searchParams = useSearchParams();
   const categoryParam = searchParams?.get("category")?.trim() ?? "";
+  const searchQuery = searchParams?.get("search")?.trim() ?? "";
   const categoryFilter =
     categoryParam &&
     (TAMIL_NEWS_CATEGORIES as readonly string[]).includes(categoryParam)
@@ -154,11 +157,14 @@ export default function HomePage() {
       }
     });
 
-    fetchNewsList<NewsItem>(
-      categoryFilter ? { category_ta: categoryFilter } : undefined
-    )
+    fetchNewsList<NewsItem>({
+      category_ta: categoryFilter || undefined,
+      search: searchQuery || undefined,
+      limit: categoryFilter ? HOME_SECTION_POOL_LIMIT : HOME_FEED_LIMIT,
+      offset: 0,
+    })
       .then((data) => {
-        if (!cancelled) setArticles(data);
+        if (!cancelled) setArticles(data.items);
       })
       .catch((error: unknown) => {
         if (!cancelled) {
@@ -175,14 +181,18 @@ export default function HomePage() {
     return () => {
       cancelled = true;
     };
-  }, [categoryFilter]);
+  }, [categoryFilter, searchQuery]);
 
   useEffect(() => {
     let cancelled = false;
 
-    fetchNewsList<NewsItem>()
+    fetchNewsList<NewsItem>({
+      search: searchQuery || undefined,
+      limit: HOME_SECTION_POOL_LIMIT,
+      offset: 0,
+    })
       .then((data) => {
-        if (!cancelled) setAllArticles(data);
+        if (!cancelled) setAllArticles(data.items);
       })
       .catch(() => {
         if (!cancelled) setAllArticles([]);
@@ -191,7 +201,7 @@ export default function HomePage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [searchQuery]);
 
   useEffect(() => {
     let cancelled = false;

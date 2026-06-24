@@ -88,7 +88,7 @@ export default function ArticlePage() {
         ).then((allNews) => {
           if (cancelled) return;
           setRelated(
-            allNews
+            allNews.items
               .filter((n: NewsItem) => n.id !== articleData.id)
               .slice(0, 4)
           );

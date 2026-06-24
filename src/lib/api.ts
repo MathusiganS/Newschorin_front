@@ -93,27 +93,47 @@ export type NewsListQuery = {
   source?: string;
   /** Exact match for `category_ta` in the database (Tamil label). */
   category_ta?: string;
+  search?: string;
+  sort?: string;
+  limit?: number;
+  offset?: number;
 };
 
 export async function fetchNewsList<T>(
   query?: NewsListQuery
-): Promise<T[]> {
+): Promise<{ items: T[]; total: number }> {
   const sp = new URLSearchParams();
   if (query?.source) sp.set("source", query.source);
   if (query?.category_ta) sp.set("category_ta", query.category_ta);
+  if (query?.search) sp.set("search", query.search);
+  if (query?.sort) sp.set("sort", query.sort);
+  if (query?.limit != null) sp.set("limit", String(query.limit));
+  if (query?.offset != null) sp.set("offset", String(query.offset));
   const qs = sp.toString();
   const url = qs ? `/api/news?${qs}` : "/api/news";
   const data = await fetchJson<unknown>(url);
-  if (!Array.isArray(data)) {
-    throw new Error("Expected a JSON array from /api/news");
+  if (Array.isArray(data)) {
+    return { items: data as T[], total: data.length };
   }
-  return data as T[];
+  if (
+    typeof data === "object" &&
+    data !== null &&
+    Array.isArray((data as { items?: unknown }).items)
+  ) {
+    const total = (data as { total?: unknown }).total;
+    return {
+      items: (data as { items: T[] }).items,
+      total: typeof total === "number" ? total : (data as { items: T[] }).items.length,
+    };
+  }
+  throw new Error("Expected news list data from /api/news");
 }
 
 export async function fetchPopularNews<T>(limit: number): Promise<T[]> {
   try {
     return await fetchJson<T[]>(`/api/news/popular?limit=${limit}`);
   } catch {
-    return fetchJson<T[]>(`/api/news?sort=popular&limit=${limit}`);
+    const data = await fetchNewsList<T>({ sort: "popular", limit });
+    return data.items;
   }
 }

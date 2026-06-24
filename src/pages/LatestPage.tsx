@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 
 import { fetchNewsList } from "../lib/api";
-import { formatSriLankaDate, sriLankaTimeValue } from "../lib/datetime";
+import { formatSriLankaDate } from "../lib/datetime";
 
 interface NewsItem {
   id: number;
@@ -16,6 +17,8 @@ interface NewsItem {
   view_count?: number;
   excerpt?: string;
 }
+
+const PAGE_SIZE = 12;
 
 function articleHref(article: NewsItem) {
   return `/article/${article.id}`;
@@ -50,25 +53,47 @@ function articleImage(article: NewsItem, className: string) {
 }
 
 export default function LatestPage() {
+  const searchParams = useSearchParams();
+  const search = searchParams?.get("search")?.trim() ?? "";
   const [articles, setArticles] = useState<NewsItem[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(0);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
+    queueMicrotask(() => {
+      setPage(0);
+    });
+  }, [search]);
+
+  useEffect(() => {
     let cancelled = false;
 
-    setLoading(true);
-    setLoadError(null);
+    queueMicrotask(() => {
+      if (!cancelled) {
+        setLoading(true);
+        setLoadError(null);
+      }
+    });
 
-    fetchNewsList<NewsItem>()
+    fetchNewsList<NewsItem>({
+      search,
+      limit: PAGE_SIZE,
+      offset: page * PAGE_SIZE,
+    })
       .then((data) => {
-        if (!cancelled) setArticles(data);
+        if (!cancelled) {
+          setArticles(data.items);
+          setTotal(data.total);
+        }
       })
       .catch((error: unknown) => {
         if (!cancelled) {
           setArticles([]);
+          setTotal(0);
           setLoadError(
-            error instanceof Error ? error.message : "செய்திகளை ஏற்ற முடியவில்லை."
+            error instanceof Error ? error.message : "Unable to load news."
           );
         }
       })
@@ -79,21 +104,15 @@ export default function LatestPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [page, search]);
 
-  const latestArticles = useMemo(() => {
-    return articles
-      .slice()
-      .sort(
-        (a, b) => sriLankaTimeValue(b.created_at) - sriLankaTimeValue(a.created_at)
-      );
-  }, [articles]);
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
-  if (loading) {
+  if (loading && articles.length === 0) {
     return (
       <main className="flex flex-1 items-center justify-center bg-[#f6fafe] py-24">
         <div className="border border-[#c6c6cd] bg-white px-6 py-4 text-sm font-semibold text-[#76777d]">
-          செய்திகள் ஏற்றப்படுகின்றன...
+          Loading news...
         </div>
       </main>
     );
@@ -104,7 +123,7 @@ export default function LatestPage() {
       <main className="flex flex-1 items-center justify-center bg-[#f6fafe] px-4 py-24 text-center">
         <div className="max-w-xl border border-[#c6c6cd] bg-white p-8">
           <h1 className="font-serif text-2xl font-black text-black">
-            செய்திகள் ஏற்ற முடியவில்லை
+            Unable to load news
           </h1>
           <p className="mt-3 text-sm leading-6 text-[#45464d]">{loadError}</p>
         </div>
@@ -121,18 +140,19 @@ export default function LatestPage() {
               NewsChorin
             </p>
             <h1 className="font-serif text-[38px] font-black leading-tight text-black md:text-[54px]">
-              சமீபத்திய செய்திகள்
+              Latest News
             </h1>
             <p className="mt-4 max-w-2xl text-[16px] font-semibold leading-7 text-[#45464d]">
-              புதிய செய்திகள் அனைத்தும் நேர வரிசையில் இங்கு தொகுக்கப்பட்டுள்ளன.
+              {search
+                ? `Search results for "${search}" • ${total} articles`
+                : `Newest approved stories, fetched ${PAGE_SIZE} at a time from the backend.`}
             </p>
           </div>
-          
         </div>
 
-        {latestArticles.length > 0 ? (
+        {articles.length > 0 ? (
           <div className="grid gap-7 bg-[#f6fafe] p-7 md:grid-cols-2 lg:grid-cols-3">
-            {latestArticles.map((article, index) => (
+            {articles.map((article) => (
               <Link
                 key={article.id}
                 href={articleHref(article)}
@@ -145,7 +165,7 @@ export default function LatestPage() {
                   )}
                 </div>
                 <span className="mb-3 block text-[10px] font-black uppercase tracking-[0.08em] text-[#bb0112]">
-                  {article.category_ta || "செய்திகள்"}
+                  {article.category_ta || "News"}
                 </span>
                 <h2 className="font-serif text-[22px] font-black leading-tight text-black transition-colors group-hover:text-[#bb0112]">
                   {article.title}
@@ -161,9 +181,37 @@ export default function LatestPage() {
           </div>
         ) : (
           <div className="p-8 text-sm font-semibold text-[#76777d]">
-            செய்திகள் இல்லை.
+            No articles found.
           </div>
         )}
+
+        {total > PAGE_SIZE ? (
+          <div className="flex flex-col items-center justify-between gap-3 border-t border-[#c6c6cd] bg-white p-6 text-sm font-black text-[#45464d] sm:flex-row">
+            <span>
+              Page {page + 1} of {totalPages} • {total} articles
+            </span>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setPage((current) => Math.max(0, current - 1))}
+                disabled={page === 0 || loading}
+                className="border border-[#c6c6cd] px-4 py-2 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Previous
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  setPage((current) => Math.min(totalPages - 1, current + 1))
+                }
+                disabled={page >= totalPages - 1 || loading}
+                className="border border-[#c6c6cd] bg-black px-4 py-2 text-white disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        ) : null}
       </section>
     </main>
   );

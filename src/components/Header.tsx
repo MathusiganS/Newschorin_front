@@ -1,7 +1,8 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import {
   OTHER_TAMIL_CATEGORIES,
@@ -17,11 +18,40 @@ const NAV_ITEMS = [
 ];
 
 export default function Header() {
+  const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const activeCategory = searchParams?.get("category") ?? "";
+  const activeSearch = searchParams?.get("search") ?? "";
+  const [searchText, setSearchText] = useState(activeSearch);
   const otherActive = OTHER_TAMIL_CATEGORIES.includes(
     activeCategory as (typeof OTHER_TAMIL_CATEGORIES)[number]
   );
+
+  useEffect(() => {
+    queueMicrotask(() => {
+      setSearchText(activeSearch);
+    });
+  }, [activeSearch]);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      const nextSearch = searchText.trim();
+      if (nextSearch === activeSearch) return;
+
+      const params = new URLSearchParams(searchParams?.toString() ?? "");
+      if (nextSearch) params.set("search", nextSearch);
+      else params.delete("search");
+
+      const targetPath = nextSearch ? "/latest" : pathname || "/";
+      const query = params.toString();
+      router.replace(query ? `${targetPath}?${query}` : targetPath, {
+        scroll: false,
+      });
+    }, 300);
+
+    return () => window.clearTimeout(timeout);
+  }, [activeSearch, pathname, router, searchParams, searchText]);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-[#cfd4da] bg-white">
@@ -97,15 +127,11 @@ export default function Header() {
           </details>
         </nav>
 
-        <div className="flex shrink-0 items-center gap-4">
-          <button
-            type="button"
-            className="flex h-9 w-9 items-center justify-center text-[#3f465c] transition-colors hover:text-black"
-            aria-label="Search"
-          >
+        <div className="flex shrink-0 items-center gap-3">
+          <label className="flex h-9 items-center gap-2 border border-[#cfd4da] px-3 text-[#3f465c] transition-colors focus-within:border-black">
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="h-[19px] w-[19px]"
+              className="h-[17px] w-[17px]"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -117,7 +143,15 @@ export default function Header() {
                 d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.197 5.197a7.5 7.5 0 0 0 10.606 10.606Z"
               />
             </svg>
-          </button>
+            <span className="sr-only">Search news</span>
+            <input
+              value={searchText}
+              onChange={(event) => setSearchText(event.target.value)}
+              placeholder="Search"
+              className="w-24 bg-transparent text-sm font-semibold text-black outline-none placeholder:text-[#76777d] md:w-36"
+              type="search"
+            />
+          </label>
           <Link
             href="/admin"
             className="hidden"
