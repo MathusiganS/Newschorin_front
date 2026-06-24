@@ -26,6 +26,14 @@ interface AdminNewsItem {
   created_at: string;
 }
 
+interface SyncErrorItem {
+  id: number;
+  url: string;
+  original_title: string;
+  error_message: string;
+  occurred_at: string;
+}
+
 type OriginalPreview = {
   label: string;
   value: string;
@@ -147,6 +155,8 @@ export default function AdminPage() {
   const [sourceFilter, setSourceFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [items, setItems] = useState<AdminNewsItem[]>([]);
+  const [syncErrors, setSyncErrors] = useState<SyncErrorItem[]>([]);
+  const [syncErrorsLoading, setSyncErrorsLoading] = useState(false);
   const [counts, setCounts] = useState<StatusCounts>({
     pending: 0,
     approved: 0,
@@ -224,13 +234,26 @@ export default function AdminPage() {
       });
   }, [sourceFilter]);
 
+  const loadSyncErrors = useCallback(() => {
+    setSyncErrorsLoading(true);
+    fetchAdminJson<SyncErrorItem[]>("/api/admin/sync-errors")
+      .then((data) => setSyncErrors(data))
+      .catch((e: unknown) => {
+        const message = e instanceof Error ? e.message : "Failed to load sync errors";
+        setFeedback({ type: "error", message });
+        if (isAuthError(message)) setAuthed(false);
+      })
+      .finally(() => setSyncErrorsLoading(false));
+  }, []);
+
   useEffect(() => {
     if (!authed) return;
     queueMicrotask(() => {
       loadItems(statusFilter);
       loadCounts();
+      loadSyncErrors();
     });
-  }, [authed, loadItems, loadCounts, statusFilter]);
+  }, [authed, loadItems, loadCounts, loadSyncErrors, statusFilter]);
 
   const onLogin = (event: React.FormEvent) => {
     event.preventDefault();
@@ -281,6 +304,24 @@ export default function AdminPage() {
       .catch((e: unknown) => {
         const message = e instanceof Error ? e.message : "Failed to update status";
         setLoadError(message);
+        setFeedback({ type: "error", message });
+        if (isAuthError(message)) setAuthed(false);
+      })
+      .finally(() => setSaving(false));
+  };
+
+  const resolveSyncError = (errorId: number) => {
+    setSaving(true);
+    setFeedback({ type: "info", message: "Marking sync error resolved..." });
+    fetchAdminJson<{ ok: boolean }>(`/api/admin/sync-errors/${errorId}/resolve`, {
+      method: "POST",
+    })
+      .then(() => {
+        setSyncErrors((current) => current.filter((item) => item.id !== errorId));
+        setFeedback({ type: "success", message: "Sync error marked resolved." });
+      })
+      .catch((e: unknown) => {
+        const message = e instanceof Error ? e.message : "Failed to resolve sync error";
         setFeedback({ type: "error", message });
         if (isAuthError(message)) setAuthed(false);
       })
@@ -601,6 +642,7 @@ export default function AdminPage() {
                 setFeedback({ type: "info", message: "Refreshing articles..." });
                 loadItems(statusFilter);
                 loadCounts();
+                loadSyncErrors();
               }}
               className="flex items-center gap-2 px-3 py-2 border border-outline-variant rounded-lg text-sm text-secondary hover:bg-surface-container"
             >
@@ -670,6 +712,84 @@ export default function AdminPage() {
                 {loadError}
               </div>
             ) : null}
+
+            <div className="bg-white border border-outline-variant rounded-2xl shadow-sm">
+              <div className="flex flex-col gap-3 border-b border-outline-variant px-5 py-4 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <h2 className="text-sm font-semibold text-on-surface">
+                    Sync Errors ({syncErrors.length})
+                  </h2>
+                  <p className="mt-1 text-xs text-on-surface-variant">
+                    Failed scraped items are stored here until marked resolved.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={loadSyncErrors}
+                  disabled={syncErrorsLoading}
+                  className="inline-flex items-center gap-2 rounded-lg border border-outline-variant px-3 py-2 text-sm font-semibold text-secondary disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <span className="material-symbols-outlined text-[18px]">refresh</span>
+                  {syncErrorsLoading ? "Loading..." : "Refresh errors"}
+                </button>
+              </div>
+              {syncErrorsLoading ? (
+                <div className="px-5 py-6 text-sm text-on-surface-variant">
+                  Loading sync errors...
+                </div>
+              ) : syncErrors.length === 0 ? (
+                <div className="px-5 py-6 text-sm text-on-surface-variant">
+                  No unresolved sync errors.
+                </div>
+              ) : (
+                <div className="divide-y divide-outline-variant">
+                  {syncErrors.map((error) => (
+                    <div key={error.id} className="px-5 py-4">
+                      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <h3 className="text-sm font-semibold text-on-surface">
+                              {error.original_title || "Untitled scraped item"}
+                            </h3>
+                            <span className="rounded-full bg-red-100 px-2 py-0.5 text-[11px] font-semibold text-red-700">
+                              Failed
+                            </span>
+                          </div>
+                          {safeArticleUrl(error.url) ? (
+                            <a
+                              href={safeArticleUrl(error.url) ?? undefined}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="mt-1 inline-block break-all text-xs font-semibold text-primary hover:underline"
+                            >
+                              {error.url}
+                            </a>
+                          ) : error.url ? (
+                            <p className="mt-1 break-all text-xs text-on-surface-variant">
+                              {error.url}
+                            </p>
+                          ) : null}
+                          <p className="mt-2 whitespace-pre-wrap rounded-lg bg-red-50 px-3 py-2 text-xs leading-5 text-red-800">
+                            {error.error_message}
+                          </p>
+                          <p className="mt-2 text-[11px] text-on-surface-variant">
+                            {formatSriLankaDateTime(error.occurred_at)}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => resolveSyncError(error.id)}
+                          disabled={saving}
+                          className="shrink-0 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-on-primary disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          Mark resolved
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
             <div className="bg-white border border-outline-variant rounded-2xl shadow-sm">
               <div className="px-5 py-4 border-b border-outline-variant">
