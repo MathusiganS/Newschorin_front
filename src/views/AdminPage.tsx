@@ -713,83 +713,81 @@ export default function AdminPage() {
               </div>
             ) : null}
 
-            <div className="bg-white border border-outline-variant rounded-2xl shadow-sm">
-              <div className="flex flex-col gap-3 border-b border-outline-variant px-5 py-4 md:flex-row md:items-center md:justify-between">
-                <div>
-                  <h2 className="text-sm font-semibold text-on-surface">
-                    Sync Errors ({syncErrors.length})
-                  </h2>
-                  <p className="mt-1 text-xs text-on-surface-variant">
-                    Failed scraped items are stored here until marked resolved.
-                  </p>
+            {syncErrorsLoading || syncErrors.length > 0 ? (
+              <div className="bg-white border border-outline-variant rounded-2xl shadow-sm">
+                <div className="flex flex-col gap-3 border-b border-outline-variant px-5 py-4 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <h2 className="text-sm font-semibold text-on-surface">
+                      Sync Errors ({syncErrors.length})
+                    </h2>
+                    <p className="mt-1 text-xs text-on-surface-variant">
+                      Failed scraped items are stored here until marked resolved.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={loadSyncErrors}
+                    disabled={syncErrorsLoading}
+                    className="inline-flex items-center gap-2 rounded-lg border border-outline-variant px-3 py-2 text-sm font-semibold text-secondary disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">refresh</span>
+                    {syncErrorsLoading ? "Loading..." : "Refresh errors"}
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={loadSyncErrors}
-                  disabled={syncErrorsLoading}
-                  className="inline-flex items-center gap-2 rounded-lg border border-outline-variant px-3 py-2 text-sm font-semibold text-secondary disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  <span className="material-symbols-outlined text-[18px]">refresh</span>
-                  {syncErrorsLoading ? "Loading..." : "Refresh errors"}
-                </button>
-              </div>
-              {syncErrorsLoading ? (
-                <div className="px-5 py-6 text-sm text-on-surface-variant">
-                  Loading sync errors...
-                </div>
-              ) : syncErrors.length === 0 ? (
-                <div className="px-5 py-6 text-sm text-on-surface-variant">
-                  No unresolved sync errors.
-                </div>
-              ) : (
-                <div className="divide-y divide-outline-variant">
-                  {syncErrors.map((error) => (
-                    <div key={error.id} className="px-5 py-4">
-                      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                        <div className="min-w-0 flex-1">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <h3 className="text-sm font-semibold text-on-surface">
-                              {error.original_title || "Untitled scraped item"}
-                            </h3>
-                            <span className="rounded-full bg-red-100 px-2 py-0.5 text-[11px] font-semibold text-red-700">
-                              Failed
-                            </span>
-                          </div>
-                          {safeArticleUrl(error.url) ? (
-                            <a
-                              href={safeArticleUrl(error.url) ?? undefined}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="mt-1 inline-block break-all text-xs font-semibold text-primary hover:underline"
-                            >
-                              {error.url}
-                            </a>
-                          ) : error.url ? (
-                            <p className="mt-1 break-all text-xs text-on-surface-variant">
-                              {error.url}
+                {syncErrorsLoading ? (
+                  <div className="px-5 py-6 text-sm text-on-surface-variant">
+                    Loading sync errors...
+                  </div>
+                ) : (
+                  <div className="divide-y divide-outline-variant">
+                    {syncErrors.map((error) => (
+                      <div key={error.id} className="px-5 py-4">
+                        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <h3 className="text-sm font-semibold text-on-surface">
+                                {error.original_title || "Untitled scraped item"}
+                              </h3>
+                              <span className="rounded-full bg-red-100 px-2 py-0.5 text-[11px] font-semibold text-red-700">
+                                Failed
+                              </span>
+                            </div>
+                            {safeArticleUrl(error.url) ? (
+                              <a
+                                href={safeArticleUrl(error.url) ?? undefined}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="mt-1 inline-block break-all text-xs font-semibold text-primary hover:underline"
+                              >
+                                {error.url}
+                              </a>
+                            ) : error.url ? (
+                              <p className="mt-1 break-all text-xs text-on-surface-variant">
+                                {error.url}
+                              </p>
+                            ) : null}
+                            <p className="mt-2 whitespace-pre-wrap rounded-lg bg-red-50 px-3 py-2 text-xs leading-5 text-red-800">
+                              {error.error_message}
                             </p>
-                          ) : null}
-                          <p className="mt-2 whitespace-pre-wrap rounded-lg bg-red-50 px-3 py-2 text-xs leading-5 text-red-800">
-                            {error.error_message}
-                          </p>
-                          <p className="mt-2 text-[11px] text-on-surface-variant">
-                            {formatSriLankaDateTime(error.occurred_at)}
-                          </p>
+                            <p className="mt-2 text-[11px] text-on-surface-variant">
+                              {formatSriLankaDateTime(error.occurred_at)}
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => resolveSyncError(error.id)}
+                            disabled={saving}
+                            className="shrink-0 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-on-primary disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            Mark resolved
+                          </button>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => resolveSyncError(error.id)}
-                          disabled={saving}
-                          className="shrink-0 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-on-primary disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                          Mark resolved
-                        </button>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : null}
 
             <div className="bg-white border border-outline-variant rounded-2xl shadow-sm">
               <div className="px-5 py-4 border-b border-outline-variant">
