@@ -44,6 +44,20 @@ type Feedback = {
   message: string;
 };
 
+async function describeImageSaveFailure(): Promise<string> {
+  try {
+    const health = await fetchAdminJson<{
+      features?: { admin_image_upload?: boolean };
+    }>("/api/health");
+    if (health?.features?.admin_image_upload) {
+      return "The backend supports image uploads but did not store this image. Check the backend logs for image save errors.";
+    }
+  } catch {
+    /* Outdated backends have no /api/health route. */
+  }
+  return "The backend behind /api is running outdated code without image upload support. Redeploy the latest tamilwin_scraper backend, make sure BACKEND_URL / NEXT_PUBLIC_API_BASE_URL points to that deployment, then redeploy the frontend (proxy rewrites are fixed at build time).";
+}
+
 const STATUS_TABS: Array<{
   value: AdminStatus;
   label: string;
@@ -356,19 +370,16 @@ export default function AdminPage() {
     })
       .then(async (saved) => {
         if (!saved.ok) throw new Error("The server did not confirm the update.");
+        if (
+          pendingImageData &&
+          (!saved.image_path || saved.image_path === activeItem.image_path)
+        ) {
+          throw new Error(await describeImageSaveFailure());
+        }
         const committed = await fetchAdminJson<AdminNewsItem>(
           `/api/admin/news/${activeItem.id}?updated=${Date.now()}`,
           { cache: "no-store" }
         );
-
-        if (
-          pendingImageData &&
-          (!committed.image_path || committed.image_path === activeItem.image_path)
-        ) {
-          throw new Error(
-            "The running backend is outdated and did not store the image. Deploy the latest tamilwin_scraper backend and try again."
-          );
-        }
 
         setActiveItem(committed);
         setPendingImageData(null);
