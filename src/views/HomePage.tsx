@@ -507,7 +507,8 @@ export default function HomePage() {
           href={articleHref(featured)}
           className="group grid text-black lg:grid-cols-5"
         >
-          <div className="relative h-[220px] overflow-hidden sm:h-[260px] lg:col-span-2">
+          <div className="relative mt-6  h-[300px] overflow-hidden sm:h-[300px] lg:col-span-2">
+            
             {articleImage(
               featured,
               "h-full w-full object-cover grayscale transition duration-700 group-hover:grayscale-0"
