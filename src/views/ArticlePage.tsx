@@ -238,8 +238,8 @@ export default function ArticlePage() {
         />
       </div>
 
-      <div className="mx-auto w-full max-w-[1280px] px-5 py-8">
-        <nav className="mb-6 flex items-center gap-2 text-[12px] font-black tracking-[0.05em] text-[#45464d]">
+      <div className="mx-auto w-full max-w-[1280px] px-4 py-6 sm:px-5 sm:py-8">
+        <nav className="mb-6 flex min-w-0 flex-wrap items-center gap-2 text-[12px] font-black tracking-[0.05em] text-[#45464d]">
           <Link
             href={`/?category=${encodeURIComponent(category)}`}
             className="hover:text-black"
@@ -252,14 +252,14 @@ export default function ArticlePage() {
           <span className="text-[#76777d]">செய்தி</span>
         </nav>
 
-        <article className="grid grid-cols-1 gap-20 lg:grid-cols-12">
+        <article className="grid grid-cols-1 gap-10 lg:grid-cols-12 lg:gap-20">
           <div className="lg:col-span-8">
-            <header className="mb-12">
-              <h1 className="font-serif text-[34px] font-black leading-tight text-black md:text-[48px]">
+            <header className="mb-8 sm:mb-12">
+              <h1 className="break-words font-serif text-[30px] font-black leading-tight text-black sm:text-[34px] md:text-[48px]">
                 {article.title}
               </h1>
 
-              <div className="mt-8 flex flex-col justify-between gap-4 border-y border-[#c6c6cd] py-4 md:flex-row md:items-center">
+              <div className="mt-6 flex flex-col justify-between gap-4 border-y border-[#c6c6cd] py-4 sm:mt-8 md:flex-row md:items-center">
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-[#dfe3e7] font-black text-black">
                     N
@@ -274,22 +274,22 @@ export default function ArticlePage() {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-6">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
                   <time className="text-[13px] font-semibold text-[#45464d]">
                     {formattedDate}
                   </time>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
                     <button
                       type="button"
                       onClick={shareArticle}
-                      className="text-[#45464d] hover:text-[#bb0112]"
+                      className="flex h-10 w-10 items-center justify-center text-[#45464d] hover:text-[#bb0112]"
                       aria-label="Share"
                     >
                       <span className="material-symbols-outlined">share</span>
                     </button>
                     <button
                       type="button"
-                      className="text-[#45464d] hover:text-[#bb0112]"
+                      className="flex h-10 w-10 items-center justify-center text-[#45464d] hover:text-[#bb0112]"
                       aria-label="Bookmark"
                     >
                       <span className="material-symbols-outlined">
@@ -299,7 +299,7 @@ export default function ArticlePage() {
                     <button
                       type="button"
                       onClick={() => window.print()}
-                      className="text-[#45464d] hover:text-[#bb0112]"
+                      className="flex h-10 w-10 items-center justify-center text-[#45464d] hover:text-[#bb0112]"
                       aria-label="Print"
                     >
                       <span className="material-symbols-outlined">print</span>
@@ -309,7 +309,7 @@ export default function ArticlePage() {
               </div>
             </header>
 
-            <figure className="mb-12">
+            <figure className="mb-8 sm:mb-12">
               <div className="aspect-video w-full overflow-hidden rounded">
                 {article.image ? (
                   <img
@@ -330,7 +330,7 @@ export default function ArticlePage() {
               </figcaption>
             </figure>
 
-            <div className="max-w-none text-[18px] leading-8 text-black">
+            <div className="max-w-none text-[16px] leading-7 text-black sm:text-[18px] sm:leading-8">
               {paragraphs.length > 0 ? (
                 paragraphs.map((paragraph, index) => (
                   <p
@@ -351,7 +351,7 @@ export default function ArticlePage() {
               )}
             </div>
 
-            <div className="mt-20 flex flex-wrap items-center justify-between gap-4 border-t border-[#c6c6cd] pt-6">
+            <div className="mt-12 flex flex-col items-start justify-between gap-4 border-t border-[#c6c6cd] pt-6 sm:mt-20 sm:flex-row sm:items-center">
               <div className="flex flex-wrap gap-2">
                 <span className="rounded bg-[#f0f4f8] px-3 py-1 text-[10px] font-black uppercase tracking-[0.05em] text-[#45464d]">
                   {category}
@@ -396,12 +396,12 @@ export default function ArticlePage() {
             </div>
           </div>
 
-          <aside className="space-y-12 lg:col-span-4">
+          <aside className="space-y-10 lg:col-span-4 lg:space-y-12">
             <div className="flex flex-col items-center border border-[#c6c6cd] bg-[#f0f4f8] p-2">
               <p className="mb-2 text-[10px] font-black uppercase tracking-[0.08em] text-[#45464d]">
                 விளம்பரம்
               </p>
-              <div className="flex h-[250px] w-[300px] items-center justify-center bg-[#dfe3e7] p-4 text-center">
+              <div className="flex h-[250px] w-full max-w-[300px] items-center justify-center bg-[#dfe3e7] p-4 text-center">
                 <div className="space-y-2">
                   <p className="text-[12px] font-black text-black">
                     NewsChorin Premium
@@ -426,13 +426,13 @@ export default function ArticlePage() {
                     <div key={`${item.id}-view-trending`}>
                       <Link
                         href={`/article/${item.id}`}
-                        className="group flex items-start gap-4"
+                        className="group flex min-w-0 items-start gap-4"
                       >
                         <span className="font-serif text-[42px] font-black leading-none text-[#c6c6cd] transition-colors group-hover:text-[#bb0112]">
                           {String(index + 1).padStart(2, "0")}
                         </span>
-                        <div>
-                          <h4 className="text-[16px] font-black leading-tight text-black group-hover:underline">
+                        <div className="min-w-0">
+                          <h4 className="break-words text-[16px] font-black leading-tight text-black group-hover:underline">
                             {item.title}
                           </h4>
                           <p className="mt-1 text-[13px] font-semibold text-[#45464d]">
@@ -457,11 +457,11 @@ export default function ArticlePage() {
         </article>
 
         {related.length > 0 ? (
-          <section className="mt-20 border-t border-[#c6c6cd] pt-20">
-            <h2 className="mb-12 font-serif text-[32px] font-black text-black">
+          <section className="mt-12 border-t border-[#c6c6cd] pt-12 sm:mt-20 sm:pt-20">
+            <h2 className="mb-8 font-serif text-[26px] font-black text-black sm:mb-12 sm:text-[32px]">
               தொடர்புடைய செய்திகள்
             </h2>
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-4">
               {related.map((item) => (
                 <Link
                   key={item.id}
@@ -487,7 +487,7 @@ export default function ArticlePage() {
                     <span className="mb-2 text-[10px] font-black uppercase tracking-[0.08em] text-[#bb0112]">
                       {item.category_ta || category}
                     </span>
-                    <h3 className="font-serif text-[18px] font-black leading-snug text-black group-hover:underline">
+                    <h3 className="break-words font-serif text-[18px] font-black leading-snug text-black group-hover:underline">
                       {item.title}
                     </h3>
                     <p className="mt-auto pt-4 text-[13px] font-semibold text-[#45464d]">

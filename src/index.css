@@ -55,6 +55,12 @@
 		background: var(--surface);
 		color: var(--on-surface);
 		font-family: "Inter", sans-serif;
+		overflow-x: hidden;
+		-webkit-text-size-adjust: 100%;
+	}
+
+	html {
+		overflow-x: hidden;
 	}
 
 	button,
@@ -67,6 +73,7 @@
 	input[type="radio"],
 	input[type="file"] {
 		cursor: pointer;
+		touch-action: manipulation;
 	}
 
 	button:disabled,

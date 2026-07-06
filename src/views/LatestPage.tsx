@@ -133,22 +133,22 @@ export default function LatestPage() {
 
   return (
     <main className="flex-1 bg-[#f6fafe] text-[#171c1f]">
-      <section className="mx-auto w-full max-w-[1280px] border-x border-b border-[#c6c6cd] bg-white">
-        <div className="flex flex-col justify-between gap-6 border-b border-black px-7 py-10 md:flex-row md:items-end">
+      <section className="mx-auto w-full max-w-[1280px] border-b border-[#c6c6cd] bg-white sm:border-x">
+        <div className="flex flex-col justify-between gap-6 border-b border-black px-4 py-7 sm:px-7 sm:py-10 md:flex-row md:items-end">
           <div>
-            <h1 className="font-serif text-[38px] font-black leading-tight text-black md:text-[54px]">
+            <h1 className="break-words font-serif text-[30px] font-black leading-tight text-black sm:text-[38px] md:text-[54px]">
               சமீபத்திய செய்திகள்
             </h1>
           </div>
         </div>
 
         {articles.length > 0 ? (
-          <div className="grid gap-7 bg-[#f6fafe] p-7 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 bg-[#f6fafe] p-4 sm:gap-7 sm:p-7 md:grid-cols-2 lg:grid-cols-3">
             {articles.map((article) => (
               <Link
                 key={article.id}
                 href={articleHref(article)}
-                className="group min-h-[360px] border border-[#c6c6cd] bg-white p-7 transition-colors hover:border-black hover:bg-[#f0f4f8]"
+                className="group min-h-[320px] border border-[#c6c6cd] bg-white p-5 transition-colors hover:border-black hover:bg-[#f0f4f8] sm:min-h-[360px] sm:p-7"
               >
                 <div className="mb-5 aspect-video overflow-hidden">
                   {articleImage(
@@ -159,7 +159,7 @@ export default function LatestPage() {
                 <span className="mb-3 block text-[10px] font-black uppercase tracking-[0.08em] text-[#bb0112]">
                   {article.category_ta || "News"}
                 </span>
-                <h2 className="font-serif text-[22px] font-black leading-tight text-black transition-colors group-hover:text-[#bb0112]">
+                <h2 className="break-words font-serif text-[20px] font-black leading-tight text-black transition-colors group-hover:text-[#bb0112] sm:text-[22px]">
                   {article.title}
                 </h2>
                 <p className="mt-3 line-clamp-3 text-[14px] font-semibold leading-6 text-[#45464d]">
@@ -178,16 +178,16 @@ export default function LatestPage() {
         )}
 
         {total > PAGE_SIZE ? (
-          <div className="flex flex-col items-center justify-between gap-3 border-t border-[#c6c6cd] bg-white p-6 text-sm font-black text-[#45464d] sm:flex-row">
+          <div className="flex flex-col items-stretch justify-between gap-3 border-t border-[#c6c6cd] bg-white p-4 text-sm font-black text-[#45464d] sm:flex-row sm:items-center sm:p-6">
             <span>
               Page {page + 1} of {totalPages} • {total} articles
             </span>
-            <div className="flex gap-3">
+            <div className="grid grid-cols-2 gap-3 sm:flex">
               <button
                 type="button"
                 onClick={() => setPage((current) => Math.max(0, current - 1))}
                 disabled={page === 0 || loading}
-                className="border border-[#c6c6cd] px-4 py-2 disabled:cursor-not-allowed disabled:opacity-40"
+                className="min-h-11 border border-[#c6c6cd] px-4 py-2 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Previous
               </button>
@@ -197,7 +197,7 @@ export default function LatestPage() {
                   setPage((current) => Math.min(totalPages - 1, current + 1))
                 }
                 disabled={page >= totalPages - 1 || loading}
-                className="border border-[#c6c6cd] bg-black px-4 py-2 text-white disabled:cursor-not-allowed disabled:opacity-40"
+                className="min-h-11 border border-[#c6c6cd] bg-black px-4 py-2 text-white disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Next
               </button>

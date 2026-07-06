@@ -70,10 +70,10 @@ function AdBlock({
     <div
       className={`flex flex-col items-center justify-center bg-[#e4e9ed] text-center ${
         compact
-          ? "min-h-[250px] p-2"
+          ? "min-h-[220px] p-2 sm:min-h-[250px]"
           : isLeaderboard
-            ? "my-10 py-8 px-4"
-            : "my-10 min-h-[280px] p-8"
+            ? "my-6 px-3 py-6 sm:my-10 sm:px-4 sm:py-8"
+            : "my-6 min-h-[220px] p-4 sm:my-10 sm:min-h-[280px] sm:p-8"
       }`}
     >
       <span className="mb-2 text-[10px] font-bold uppercase text-[#76777d]">
@@ -82,7 +82,7 @@ function AdBlock({
       <div
         className={`flex items-center justify-center border border-dashed border-[#76777d] text-sm font-semibold text-[#76777d] ${
           compact
-            ? "h-[206px] w-full"
+            ? "h-[206px] w-full max-w-[300px]"
             : isLeaderboard
               ? "h-[90px] w-full max-w-[728px]"
               : "h-[204px] w-full max-w-[970px]"
@@ -112,8 +112,8 @@ function SectionTitle({
   link?: string;
 }) {
   return (
-    <div className="flex h-[70px] items-center justify-between border-b border-[#c6c6cd] bg-[#f0f4f8] px-7">
-      <h2 className="border-l-4 border-[#bb0112] pl-3 font-serif text-[24px] font-black">
+    <div className="flex min-h-[64px] items-center justify-between gap-3 border-b border-[#c6c6cd] bg-[#f0f4f8] px-4 py-3 sm:px-7">
+      <h2 className="border-l-4 border-[#bb0112] pl-3 font-serif text-[20px] font-black leading-tight sm:text-[24px]">
         {title}
       </h2>
       {link ? (
@@ -328,13 +328,13 @@ export default function HomePage() {
 
     return (
       <main className="flex-1 bg-white text-[#171c1f]">
-        <div className="mx-auto w-full max-w-[1280px] px-5 py-12">
-          <header className="mb-12 flex flex-col justify-between gap-6 border-b border-black pb-6 md:flex-row md:items-end">
+        <div className="mx-auto w-full max-w-[1280px] px-4 py-8 sm:px-5 sm:py-12">
+          <header className="mb-8 flex flex-col justify-between gap-6 border-b border-black pb-6 md:mb-12 md:flex-row md:items-end">
             <div className="max-w-3xl">
-              <h1 className="font-serif text-[42px] font-black leading-tight text-black md:text-[56px]">
+              <h1 className="break-words font-serif text-[34px] font-black leading-tight text-black sm:text-[42px] md:text-[56px]">
                 {categoryFilter}
               </h1>
-              <p className="mt-3 text-[18px] leading-8 text-[#45464d]">
+              <p className="mt-3 text-[16px] leading-7 text-[#45464d] sm:text-[18px] sm:leading-8">
                 {categoryFilter} தொடர்பான சமீபத்திய செய்திகள், முக்கிய
                 நிகழ்வுகள் மற்றும் விரிவான தகவல்கள்.
               </p>
@@ -348,22 +348,22 @@ export default function HomePage() {
 
           <Link
             href={articleHref(categoryLead)}
-            className="group mb-20 flex cursor-pointer flex-col gap-12 lg:flex-row"
+            className="group mb-12 flex cursor-pointer flex-col gap-6 sm:gap-8 lg:mb-20 lg:flex-row lg:gap-12"
           >
             <div className="overflow-hidden rounded lg:w-[40%]">
               {articleImage(
                 categoryLead,
-                "h-[400px] w-full object-cover transition duration-700 group-hover:scale-105"
+                "h-[240px] w-full object-cover transition duration-700 group-hover:scale-105 sm:h-[320px] lg:h-[400px]"
               )}
             </div>
             <div className="flex flex-col justify-center lg:w-[60%]">
               <span className="mb-5 w-fit rounded bg-[#f0f4f8] px-3 py-1 text-[12px] font-black tracking-[0.05em] text-black">
                 {categoryFilter}
               </span>
-              <h2 className="font-serif text-[34px] font-black leading-tight text-black group-hover:underline group-hover:decoration-[#bb0112] group-hover:decoration-2 group-hover:underline-offset-4 md:text-[48px]">
+              <h2 className="break-words font-serif text-[28px] font-black leading-tight text-black group-hover:underline group-hover:decoration-[#bb0112] group-hover:decoration-2 group-hover:underline-offset-4 sm:text-[34px] md:text-[48px]">
                 {categoryLead.title}
               </h2>
-              <p className="mt-6 text-[18px] leading-8 text-[#45464d]">
+              <p className="mt-4 text-[16px] leading-7 text-[#45464d] sm:mt-6 sm:text-[18px] sm:leading-8">
                 {articleExcerpt(categoryLead)}
               </p>
               <div className="mt-6 flex flex-wrap items-center gap-3">
@@ -378,7 +378,7 @@ export default function HomePage() {
             </div>
           </Link>
 
-          <div className="grid grid-cols-1 gap-12 lg:grid-cols-12">
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 lg:gap-12">
             <div className="lg:col-span-8">
               <h3 className="mb-6 border-b border-[#c6c6cd] pb-2 text-[12px] font-black uppercase tracking-[0.08em] text-[#bb0112]">
                 சமீபத்திய முன்னேற்றங்கள்
@@ -386,7 +386,7 @@ export default function HomePage() {
 
               {categoryDevelopments.length > 0 ? (
                 <>
-                  <div className="grid grid-cols-1 gap-12 md:grid-cols-2">
+                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:gap-12">
                     {visibleCategoryDevelopments.map((article) => (
                       <Link
                         key={article.id}
@@ -399,14 +399,14 @@ export default function HomePage() {
                             "h-full w-full object-cover transition duration-500 group-hover:scale-105"
                           )}
                         </div>
-                        <div className="p-6">
-                          <h4 className="font-serif text-[24px] font-black leading-tight text-black transition-colors group-hover:text-[#bb0112]">
+                        <div className="p-5 sm:p-6">
+                          <h4 className="break-words font-serif text-[21px] font-black leading-tight text-black transition-colors group-hover:text-[#bb0112] sm:text-[24px]">
                             {article.title}
                           </h4>
                           <p className="mt-4 line-clamp-3 text-[15px] leading-6 text-[#45464d]">
                             {articleExcerpt(article)}
                           </p>
-                          <div className="mt-6 flex items-center justify-between border-t border-[#c6c6cd] pt-4">
+                          <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-[#c6c6cd] pt-4">
                             <span className="text-[13px] font-semibold text-[#76777d]">
                               {formatDate(article.created_at)}
                             </span>
@@ -429,7 +429,7 @@ export default function HomePage() {
                             count: categoryDevelopments.length,
                           })
                         }
-                        className="border border-black px-10 py-4 text-[12px] font-black uppercase tracking-[0.08em] text-black transition-colors hover:bg-black hover:text-white"
+                        className="min-h-11 border border-black px-8 py-3 text-[12px] font-black uppercase tracking-[0.08em] text-black transition-colors hover:bg-black hover:text-white sm:px-10 sm:py-4"
                       >
                         மேலும் செய்திகள்
                       </button>
@@ -482,7 +482,7 @@ export default function HomePage() {
                 <span className="mb-1 text-[10px] font-black uppercase tracking-[0.12em] text-[#76777d]">
                   விளம்பரம்
                 </span>
-                <div className="flex h-[250px] w-[300px] items-center justify-center border border-[#c6c6cd] bg-[#e4e9ed] p-6 text-center">
+                <div className="flex h-[250px] w-full max-w-[300px] items-center justify-center border border-[#c6c6cd] bg-[#e4e9ed] p-6 text-center">
                   <div>
                     <p className="mb-2 text-[12px] font-black text-[#76777d]">
                       300×250 Sidebar MREC
@@ -502,12 +502,12 @@ export default function HomePage() {
 
   return (
     <main className="flex-1 bg-[#f6fafe] text-[#171c1f]">
-      <section className="mx-auto w-full max-w-[1280px] border-x border-b border-[#c6c6cd] bg-white">
+      <section className="mx-auto w-full max-w-[1280px] border-b border-[#c6c6cd] bg-white sm:border-x">
         <Link
           href={articleHref(featured)}
           className="group grid text-black lg:grid-cols-5"
         >
-          <div className="relative h-[260px] overflow-hidden lg:col-span-2">
+          <div className="relative h-[220px] overflow-hidden sm:h-[260px] lg:col-span-2">
             {articleImage(
               featured,
               "h-full w-full object-cover grayscale transition duration-700 group-hover:grayscale-0"
@@ -516,11 +516,11 @@ export default function HomePage() {
               முக்கிய செய்தி
             </span>
           </div>
-          <div className="flex min-h-[260px] flex-col justify-center p-8 lg:col-span-3 lg:p-10">
+          <div className="flex min-h-[220px] flex-col justify-center p-5 sm:min-h-[260px] sm:p-8 lg:col-span-3 lg:p-10">
             <span className="mb-4 text-[11px] font-black tracking-[0.14em] text-[#bd1414]">
               {featured.category_ta || "செய்திகள்"}
             </span>
-            <h1 className="font-serif text-[30px] font-black leading-[1.02] text-black transition-colors group-hover:text-[#bb0112] group-active:text-[#bb0112] md:text-[36px]">
+            <h1 className="break-words font-serif text-[26px] font-black leading-tight text-black transition-colors group-hover:text-[#bb0112] group-active:text-[#bb0112] sm:text-[30px] md:text-[36px]">
               {featured.title}
             </h1>
             <p className="mt-4 line-clamp-2 text-[15px] font-semibold leading-6 text-[#45464d]">
@@ -538,10 +538,10 @@ export default function HomePage() {
         </Link>
       </section>
 
-      <section className="mx-auto grid w-full max-w-[1280px] border-x border-b border-[#c6c6cd] bg-white lg:grid-cols-[1fr_320px]">
+      <section className="mx-auto grid w-full max-w-[1280px] border-b border-[#c6c6cd] bg-white sm:border-x lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="lg:border-r lg:border-[#c6c6cd]">
-          <div className="flex h-[70px] items-center justify-between border-b border-[#c6c6cd] bg-[#f0f4f8] px-7">
-            <h2 className="font-serif text-2xl font-black">
+          <div className="flex min-h-[64px] items-center justify-between gap-3 border-b border-[#c6c6cd] bg-[#f0f4f8] px-4 py-3 sm:px-7">
+            <h2 className="font-serif text-[20px] font-black leading-tight sm:text-2xl">
               சமீபத்திய செய்திகள்
             </h2>
             {hasMoreLatest ? (
@@ -566,7 +566,7 @@ export default function HomePage() {
               <Link
                 key={article.id}
                 href={articleHref(article)}
-                className={`group min-h-[285px] border-b border-[#c6c6cd] p-7 transition-colors hover:bg-[#f0f4f8] ${
+                className={`group min-h-[245px] border-b border-[#c6c6cd] p-5 transition-colors hover:bg-[#f0f4f8] sm:min-h-[285px] sm:p-7 ${
                   index % 2 === 0 ? "md:border-r md:border-[#c6c6cd]" : ""
                 }`}
               >
@@ -596,7 +596,7 @@ export default function HomePage() {
         </div>
 
         <aside className="flex flex-col bg-[#f0f4f8]">
-          <div className="bg-black px-7 py-6 text-[12px] font-black tracking-[0.12em] text-white">
+          <div className="bg-black px-5 py-5 text-[12px] font-black tracking-[0.12em] text-white sm:px-7 sm:py-6">
             அதிகம் வாசிக்கப்பட்டவை
           </div>
           <div className="bg-white">
@@ -605,7 +605,7 @@ export default function HomePage() {
                 <Link
                   key={`${article.id}-trend`}
                   href={articleHref(article)}
-                  className="group flex gap-5 border-b border-[#c6c6cd] p-7 transition-colors hover:bg-[#f0f4f8]"
+                  className="group flex gap-4 border-b border-[#c6c6cd] p-5 transition-colors hover:bg-[#f0f4f8] sm:gap-5 sm:p-7"
                 >
                   <span className="font-serif text-[38px] font-black leading-none text-[#c6c6cd]">
                     {index + 1}
@@ -627,7 +627,7 @@ export default function HomePage() {
               </div>
             )}
           </div>
-          <div className="mt-auto min-h-[330px] bg-[#f0f4f8] p-2 pt-20">
+          <div className="mt-auto min-h-[260px] bg-[#f0f4f8] p-2 pt-8 sm:min-h-[330px] sm:pt-20">
             <AdBlock label="MREC" size="300×250" compact />
           </div>
         </aside>
@@ -650,7 +650,7 @@ export default function HomePage() {
         return (
           <section
             key={row.join("-")}
-            className="mx-auto grid w-full max-w-[1280px] border-x border-b border-[#c6c6cd] bg-white lg:grid-cols-2"
+            className="mx-auto grid w-full max-w-[1280px] border-b border-[#c6c6cd] bg-white sm:border-x lg:grid-cols-2"
           >
             {visibleSections.map((section, index) => (
               <div
@@ -671,7 +671,7 @@ export default function HomePage() {
                         <Link
                           key={article.id}
                           href={articleHref(article)}
-                          className={`min-h-[245px] p-7 transition-colors hover:bg-[#f0f4f8] ${
+                          className={`min-h-[220px] p-5 transition-colors hover:bg-[#f0f4f8] sm:min-h-[245px] sm:p-7 ${
                             articleIndex === 0
                               ? "border-b border-[#c6c6cd] md:border-b-0 md:border-r"
                               : ""
@@ -694,7 +694,7 @@ export default function HomePage() {
                     : [0, 1].map((slot) => (
                         <div
                           key={`${section.category}-${slot}`}
-                          className={`min-h-[210px] p-7 ${
+                          className={`min-h-[180px] p-5 sm:min-h-[210px] sm:p-7 ${
                             slot === 0
                               ? "border-b border-[#c6c6cd] md:border-b-0 md:border-r"
                               : ""
@@ -716,13 +716,13 @@ export default function HomePage() {
         />
       </section>
 
-      <section className="mx-auto w-full max-w-[1280px] border border-[#c6c6cd] bg-white">
+      <section className="mx-auto w-full max-w-[1280px] border-y border-[#c6c6cd] bg-white sm:border">
         <SectionTitle
           title={INTERNATIONAL_CATEGORY}
           link={`/?category=${encodeURIComponent(INTERNATIONAL_CATEGORY)}`}
         />
-        <div className="p-7">
-          <div className="grid gap-8 md:grid-cols-3">
+        <div className="p-5 sm:p-7">
+          <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 md:gap-8">
             {internationalStories.map((article) => (
               <Link
                 href={articleHref(article)}

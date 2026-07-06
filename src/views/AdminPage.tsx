@@ -525,7 +525,7 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="bg-surface text-on-surface h-screen flex overflow-hidden antialiased font-body-md">
+    <div className="flex min-h-screen bg-surface text-on-surface antialiased font-body-md lg:h-screen lg:overflow-hidden">
       <nav className="hidden lg:flex fixed left-0 top-0 h-full w-[280px] bg-gradient-to-b from-[#0e2a66] to-[#0a1f45] text-white flex-col pt-6 pb-4 z-40">
         <div className="px-5">
           <div className="flex items-center gap-3">
@@ -609,9 +609,9 @@ export default function AdminPage() {
         </div>
       </nav>
 
-      <main className="flex-1 flex flex-col h-full bg-surface lg:ml-[280px]">
-        <header className="h-16 px-8 flex items-center justify-between border-b border-outline-variant bg-white">
-          <div className="text-sm text-secondary flex items-center gap-2">
+      <main className="flex min-w-0 flex-1 flex-col bg-surface lg:ml-[280px] lg:h-full">
+        <header className="flex min-h-16 flex-col gap-3 border-b border-outline-variant bg-white px-4 py-3 sm:px-6 lg:h-16 lg:flex-row lg:items-center lg:justify-between lg:px-8 lg:py-0">
+          <div className="flex min-w-0 flex-wrap items-center gap-2 text-sm text-secondary">
             <Link href="/" className="hover:text-primary transition-colors">
               Home
             </Link>
@@ -624,11 +624,11 @@ export default function AdminPage() {
               </>
             ) : null}
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex w-full min-w-0 flex-wrap items-center gap-3 lg:w-auto lg:flex-nowrap">
             {!isEditing ? (
-              <div className="relative">
+              <div className="relative min-w-0 flex-1 sm:max-w-sm lg:flex-none">
                 <input
-                  className="pl-9 pr-4 py-2 border border-outline-variant rounded-lg text-sm bg-white focus:ring-2 focus:ring-primary outline-none"
+                  className="w-full rounded-lg border border-outline-variant bg-white py-2 pl-9 pr-4 text-sm outline-none focus:ring-2 focus:ring-primary"
                   placeholder="Search articles..."
                   type="text"
                   value={searchQuery}
@@ -649,28 +649,28 @@ export default function AdminPage() {
                 loadItems();
                 loadSyncErrors();
               }}
-              className="flex items-center gap-2 px-3 py-2 border border-outline-variant rounded-lg text-sm text-secondary hover:bg-surface-container"
+              className="flex min-h-10 items-center gap-2 rounded-lg border border-outline-variant px-3 py-2 text-sm text-secondary hover:bg-surface-container"
             >
               <span className="material-symbols-outlined text-[18px]">refresh</span>
               Refresh
             </button>
-            <div className="w-9 h-9 rounded-full bg-primary text-on-primary flex items-center justify-center text-sm font-semibold">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-on-primary">
               A
             </div>
           </div>
         </header>
 
         {!isEditing ? (
-          <section className="px-8 py-6 flex flex-col gap-6 overflow-y-auto">
+          <section className="flex flex-col gap-5 overflow-y-auto px-4 py-5 sm:px-6 lg:gap-6 lg:px-8 lg:py-6">
             <div className="flex flex-col gap-1">
-              <h1 className="text-2xl font-semibold text-on-surface">Admin Panel</h1>
+              <h1 className="text-xl font-semibold text-on-surface sm:text-2xl">Admin Panel</h1>
               <p className="text-sm text-on-surface-variant">
                 Manage approvals and edit articles.
               </p>
             </div>
 
-            <div className="flex flex-wrap items-end justify-between gap-4">
-              <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 lg:flex lg:flex-wrap lg:items-center lg:gap-3">
                 {STATUS_TABS.map((tab) => (
                   <button
                     key={tab.value}
@@ -679,7 +679,7 @@ export default function AdminPage() {
                       setStatusFilter(tab.value);
                       setPage(1);
                     }}
-                    className={`px-4 py-2 rounded-lg border text-sm font-medium shadow-sm ${tab.className} ${
+                    className={`min-h-11 rounded-lg border px-4 py-2 text-sm font-medium shadow-sm ${tab.className} ${
                       statusFilter === tab.value ? "ring-2 ring-primary/20" : "opacity-80"
                     }`}
                   >
@@ -688,7 +688,7 @@ export default function AdminPage() {
                 ))}
               </div>
 
-              <label className="flex min-w-[220px] flex-col gap-1.5">
+              <label className="flex w-full flex-col gap-1.5 sm:max-w-xs lg:min-w-[220px]">
                 <span className="text-xs font-semibold uppercase tracking-wide text-on-surface-variant">
                   News source
                 </span>
@@ -702,7 +702,7 @@ export default function AdminPage() {
                       setSourceFilter(event.target.value);
                       setPage(1);
                     }}
-                    className="h-10 w-full appearance-none rounded-lg border border-outline-variant bg-white pl-10 pr-10 text-sm font-medium text-on-surface shadow-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+                    className="h-11 w-full appearance-none rounded-lg border border-outline-variant bg-white pl-10 pr-10 text-sm font-medium text-on-surface shadow-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 lg:h-10"
                     aria-label="Filter articles by news source"
                   >
                     {NEWS_SOURCES.map((source) => (
@@ -725,7 +725,7 @@ export default function AdminPage() {
             ) : null}
 
             {syncErrorsLoading || syncErrors.length > 0 ? (
-              <div className="bg-white border border-outline-variant rounded-2xl shadow-sm">
+              <div className="overflow-hidden rounded-xl border border-outline-variant bg-white shadow-sm sm:rounded-2xl">
                 <div className="flex flex-col gap-3 border-b border-outline-variant px-5 py-4 md:flex-row md:items-center md:justify-between">
                   <div>
                     <h2 className="text-sm font-semibold text-on-surface">
@@ -739,7 +739,7 @@ export default function AdminPage() {
                     type="button"
                     onClick={loadSyncErrors}
                     disabled={syncErrorsLoading}
-                    className="inline-flex items-center gap-2 rounded-lg border border-outline-variant px-3 py-2 text-sm font-semibold text-secondary disabled:cursor-not-allowed disabled:opacity-60"
+                    className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-outline-variant px-3 py-2 text-sm font-semibold text-secondary disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     <span className="material-symbols-outlined text-[18px]">refresh</span>
                     {syncErrorsLoading ? "Loading..." : "Refresh errors"}
@@ -753,7 +753,7 @@ export default function AdminPage() {
                   <div className="divide-y divide-outline-variant">
                     {syncErrors.map((error) => (
                       <div key={error.id} className="px-5 py-4">
-                        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                        <div className="flex min-w-0 flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                           <div className="min-w-0 flex-1">
                             <div className="flex flex-wrap items-center gap-2">
                               <h3 className="text-sm font-semibold text-on-surface">
@@ -801,7 +801,7 @@ export default function AdminPage() {
             ) : null}
 
             <div className="bg-white border border-outline-variant rounded-2xl shadow-sm">
-              <div className="px-5 py-4 border-b border-outline-variant">
+              <div className="border-b border-outline-variant px-4 py-4 sm:px-5">
                 <h2 className="text-sm font-semibold text-on-surface">
                   {STATUS_TABS.find((tab) => tab.value === statusFilter)?.label} Articles ({total})
                 </h2>
@@ -822,9 +822,9 @@ export default function AdminPage() {
                         setPendingImageData(null);
                         setActiveItem(item);
                       }}
-                      className="w-full flex items-start gap-4 px-5 py-4 hover:bg-surface-container-low transition-colors text-left"
+                      className="flex w-full min-w-0 flex-col gap-3 px-4 py-4 text-left transition-colors hover:bg-surface-container-low sm:flex-row sm:items-start sm:gap-4 sm:px-5"
                     >
-                      <div className="w-14 h-14 rounded-lg overflow-hidden bg-surface-container-low border border-outline-variant">
+                      <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-outline-variant bg-surface-container-low">
                         {item.image ? (
                           <img
                             alt="thumb"
@@ -837,8 +837,8 @@ export default function AdminPage() {
                           </div>
                         )}
                       </div>
-                      <div className="flex-1">
-                        <h3 className="text-sm font-semibold text-on-surface leading-snug">
+                      <div className="min-w-0 flex-1">
+                        <h3 className="break-words text-sm font-semibold leading-snug text-on-surface">
                           {item.title}
                         </h3>
                         <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-on-surface-variant">
@@ -861,7 +861,7 @@ export default function AdminPage() {
                           ) : null}
                         </div>
                       </div>
-                      <div className="flex items-center gap-4 text-[11px] text-on-surface-variant">
+                      <div className="flex shrink-0 flex-wrap items-center gap-3 text-[11px] text-on-surface-variant sm:justify-end">
                         <span>{formatRelativeTime(item.created_at)}</span>
                         <span>{formatSriLankaDateTime(item.created_at)}</span>
                         <span className="material-symbols-outlined text-[18px]">more_horiz</span>
@@ -871,13 +871,13 @@ export default function AdminPage() {
                 )}
               </div>
 
-              <div className="px-5 py-4 border-t border-outline-variant flex flex-col md:flex-row md:items-center md:justify-between gap-3 text-sm text-on-surface-variant">
-                <div className="flex items-center gap-2">
+              <div className="flex flex-col gap-3 border-t border-outline-variant px-4 py-4 text-sm text-on-surface-variant md:flex-row md:items-center md:justify-between sm:px-5">
+                <div className="flex flex-wrap items-center gap-2">
                   <button
                     type="button"
                     onClick={() => setPage(Math.max(1, page - 1))}
                     disabled={page === 1 || loading}
-                    className="w-8 h-8 rounded-full border border-outline-variant flex items-center justify-center"
+                    className="flex h-10 w-10 items-center justify-center rounded-full border border-outline-variant sm:h-8 sm:w-8"
                   >
                     ‹
                   </button>
@@ -887,7 +887,7 @@ export default function AdminPage() {
                       type="button"
                       onClick={() => setPage(num)}
                       disabled={loading}
-                      className={`w-8 h-8 rounded-full border ${
+                      className={`h-10 w-10 rounded-full border sm:h-8 sm:w-8 ${
                         page === num
                           ? "bg-primary text-on-primary border-primary"
                           : "border-outline-variant"
@@ -900,12 +900,12 @@ export default function AdminPage() {
                     type="button"
                     onClick={() => setPage(Math.min(totalPages, page + 1))}
                     disabled={page >= totalPages || loading}
-                    className="w-8 h-8 rounded-full border border-outline-variant flex items-center justify-center"
+                    className="flex h-10 w-10 items-center justify-center rounded-full border border-outline-variant sm:h-8 sm:w-8"
                   >
                     ›
                   </button>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                   <select
                     value={pageSize}
                     onChange={(e) => {
@@ -928,20 +928,20 @@ export default function AdminPage() {
             </div>
           </section>
         ) : (
-          <section className="px-8 py-6 overflow-y-auto">
-            <div className="flex items-center justify-between gap-4">
+          <section className="overflow-y-auto px-4 py-5 sm:px-6 lg:px-8 lg:py-6">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div>
-                <h1 className="text-2xl font-semibold text-on-surface">Edit Article</h1>
+                <h1 className="text-xl font-semibold text-on-surface sm:text-2xl">Edit Article</h1>
                 <p className="text-sm text-on-surface-variant">
                   Update the article details and manage approval.
                 </p>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 lg:flex lg:items-center lg:gap-3">
                 <button
                   type="button"
                   onClick={() => updateStatus(activeItem.id, "approved")}
                   disabled={saving}
-                  className="px-4 py-2 rounded-lg bg-green-600 text-white text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
+                  className="min-h-11 rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   Approve
                 </button>
@@ -949,7 +949,7 @@ export default function AdminPage() {
                   type="button"
                   onClick={() => updateStatus(activeItem.id, "rejected")}
                   disabled={saving}
-                  className="px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
+                  className="min-h-11 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   Reject
                 </button>
@@ -957,7 +957,7 @@ export default function AdminPage() {
                   type="button"
                   onClick={onSave}
                   disabled={saving || uploadingImage}
-                  className="px-4 py-2 rounded-lg bg-primary text-on-primary text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-60"
+                  className="min-h-11 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-on-primary disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {saving ? "Saving..." : "Save Changes"}
                 </button>
@@ -985,8 +985,8 @@ export default function AdminPage() {
             ) : null}
 
             {activeItem ? (
-              <form onSubmit={onSave} className="mt-6 grid grid-cols-1 xl:grid-cols-[1fr_2fr] gap-6">
-                <div className="bg-white border border-outline-variant rounded-2xl p-5 shadow-sm">
+              <form onSubmit={onSave} className="mt-6 grid grid-cols-1 gap-5 xl:grid-cols-[minmax(260px,1fr)_minmax(0,2fr)] xl:gap-6">
+                <div className="rounded-xl border border-outline-variant bg-white p-4 shadow-sm sm:rounded-2xl sm:p-5">
                   <div className="flex items-center justify-between">
                     <h3 className="text-sm font-semibold">Featured Image</h3>
                     <span className="text-xs text-red-500">*</span>
@@ -1005,7 +1005,7 @@ export default function AdminPage() {
                     )}
                   </div>
                   <div className="mt-3 flex items-center gap-3">
-                    <label className={`cursor-pointer px-3 py-2 rounded-lg border border-outline-variant text-sm font-medium ${
+                    <label className={`min-h-10 cursor-pointer rounded-lg border border-outline-variant px-3 py-2 text-sm font-medium ${
                       uploadingImage ? "pointer-events-none opacity-60" : "hover:bg-surface-container-low"
                     }`}>
                       {uploadingImage ? "Uploading..." : "Choose Image"}
@@ -1028,7 +1028,7 @@ export default function AdminPage() {
                           image_path: "",
                         });
                       }}
-                      className="px-3 py-2 rounded-lg text-sm text-red-500"
+                      className="min-h-10 rounded-lg px-3 py-2 text-sm text-red-500"
                     >
                       Remove
                     </button>
@@ -1054,7 +1054,7 @@ export default function AdminPage() {
                   </div>
                 </div>
 
-                <div className="bg-white border border-outline-variant rounded-2xl p-5 shadow-sm flex flex-col gap-4">
+                <div className="flex flex-col gap-4 rounded-xl border border-outline-variant bg-white p-4 shadow-sm sm:rounded-2xl sm:p-5">
                   <div>
                     <div className="flex items-center justify-between gap-3">
                       <label className="text-xs text-on-surface-variant">Title *</label>
@@ -1105,7 +1105,7 @@ export default function AdminPage() {
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
                     <div>
                       <label className="text-xs text-on-surface-variant">Source *</label>
                       <input
@@ -1185,7 +1185,7 @@ export default function AdminPage() {
                       </button>
                     </div>
                     <div className="mt-2 border border-outline-variant rounded-lg overflow-hidden">
-                      <div className="flex items-center gap-2 border-b border-outline-variant px-3 py-2 text-xs text-secondary">
+                      <div className="flex flex-wrap items-center gap-2 border-b border-outline-variant px-3 py-2 text-xs text-secondary">
                         <span className="px-2 py-1 rounded bg-surface-container-low">Paragraph</span>
                         <span className="font-bold">B</span>
                         <span className="italic">I</span>
@@ -1217,7 +1217,7 @@ export default function AdminPage() {
         <div
           role="status"
           aria-live="polite"
-          className={`fixed right-5 top-5 z-[70] flex max-w-sm items-start gap-3 rounded-xl border px-4 py-3 text-sm font-semibold shadow-xl ${
+          className={`fixed left-4 right-4 top-4 z-[70] flex max-w-sm items-start gap-3 rounded-xl border px-4 py-3 text-sm font-semibold shadow-xl sm:left-auto sm:right-5 sm:top-5 ${
             feedback.type === "success"
               ? "border-green-200 bg-green-50 text-green-800"
               : feedback.type === "error"
