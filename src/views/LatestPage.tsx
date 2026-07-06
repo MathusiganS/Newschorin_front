@@ -136,17 +136,9 @@ export default function LatestPage() {
       <section className="mx-auto w-full max-w-[1280px] border-x border-b border-[#c6c6cd] bg-white">
         <div className="flex flex-col justify-between gap-6 border-b border-black px-7 py-10 md:flex-row md:items-end">
           <div>
-            <p className="mb-3 text-[11px] font-black uppercase tracking-[0.14em] text-[#bb0112]">
-              NewsChorin
-            </p>
             <h1 className="font-serif text-[38px] font-black leading-tight text-black md:text-[54px]">
-              Latest News
+              சமீபத்திய செய்திகள்
             </h1>
-            <p className="mt-4 max-w-2xl text-[16px] font-semibold leading-7 text-[#45464d]">
-              {search
-                ? `Search results for "${search}" • ${total} articles`
-                : `Newest approved stories, fetched ${PAGE_SIZE} at a time from the backend.`}
-            </p>
           </div>
         </div>
 

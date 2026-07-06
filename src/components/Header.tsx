@@ -58,9 +58,14 @@ export default function Header() {
       <div className="flex h-[66px] w-full items-center justify-between gap-6 px-5">
         <Link
           href="/"
-          className="font-serif text-[26px] font-black uppercase leading-none tracking-normal text-black transition-colors hover:text-[#bb0112]"
+          className="flex shrink-0 items-center ml-24"
+          aria-label="NewsChorin home"
         >
-          The Chronicle
+          <img
+            src="/images/Logo.jpg"
+            alt="NewsChorin"
+            className="h-14 w-auto object-contain"
+          />
         </Link>
 
         <nav className="hidden flex-1 items-center justify-center gap-8 md:flex">
@@ -127,7 +132,7 @@ export default function Header() {
           </details>
         </nav>
 
-        <div className="flex shrink-0 items-center gap-3">
+        <div className="flex shrink-0 items-center gap-3 mr-24">
           <label className="flex h-9 items-center gap-2 border border-[#cfd4da] px-3 text-[#3f465c] transition-colors focus-within:border-black">
             <svg
               xmlns="http://www.w3.org/2000/svg"
