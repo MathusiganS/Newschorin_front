@@ -44,6 +44,12 @@ type Feedback = {
   message: string;
 };
 
+type AdminNewsListResponse = {
+  items: AdminNewsItem[];
+  total: number;
+  counts: StatusCounts;
+};
+
 async function describeImageSaveFailure(): Promise<string> {
   try {
     const health = await fetchAdminJson<{
@@ -169,6 +175,7 @@ export default function AdminPage() {
   const [sourceFilter, setSourceFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [items, setItems] = useState<AdminNewsItem[]>([]);
+  const [total, setTotal] = useState(0);
   const [syncErrors, setSyncErrors] = useState<SyncErrorItem[]>([]);
   const [syncErrorsLoading, setSyncErrorsLoading] = useState(false);
   const [counts, setCounts] = useState<StatusCounts>({
@@ -200,18 +207,42 @@ export default function AdminPage() {
     return () => window.clearTimeout(timeout);
   }, [feedback]);
 
-  const loadItems = useCallback((filter: AdminStatus, source = sourceFilter) => {
+  const loadItems = useCallback(() => {
     setLoading(true);
     setLoadError(null);
-    const params = new URLSearchParams({ status: filter });
-    if (source !== "all") params.set("source", source);
-    fetchAdminJson<AdminNewsItem[]>(`/api/admin/news?${params.toString()}`)
+    const params = new URLSearchParams({
+      status: statusFilter,
+      limit: String(pageSize),
+      offset: String((page - 1) * pageSize),
+      include_meta: "true",
+    });
+    if (sourceFilter !== "all") params.set("source", sourceFilter);
+    if (categoryFilter !== "admin" && categoryFilter !== "all") {
+      params.set("category_ta", categoryFilter);
+    }
+    const search = searchQuery.trim();
+    if (search) params.set("search", search);
+    fetchAdminJson<AdminNewsListResponse | AdminNewsItem[]>(
+      `/api/admin/news?${params.toString()}`
+    )
       .then((data) => {
-        setItems(data);
-        setPage(1);
+        const response = Array.isArray(data)
+          ? {
+              items: data,
+              total: data.length,
+              counts: {
+                pending: statusFilter === "pending" ? data.length : 0,
+                approved: statusFilter === "approved" ? data.length : 0,
+                rejected: statusFilter === "rejected" ? data.length : 0,
+              },
+            }
+          : data;
+        setItems(response.items);
+        setTotal(response.total);
+        setCounts(response.counts);
         setActiveItem((current) => {
           if (!current) return current;
-          return data.find((d) => d.id === current.id) || null;
+          return response.items.find((d) => d.id === current.id) || null;
         });
       })
       .catch((e: unknown) => {
@@ -220,33 +251,12 @@ export default function AdminPage() {
         if (isAuthError(msg)) {
           setAuthed(false);
           setItems([]);
+          setTotal(0);
           setActiveItem(null);
         }
       })
       .finally(() => setLoading(false));
-  }, [sourceFilter]);
-
-  const loadCounts = useCallback(() => {
-    const sourceQuery =
-      sourceFilter === "all"
-        ? ""
-        : `&source=${encodeURIComponent(sourceFilter)}`;
-    Promise.all([
-      fetchAdminJson<AdminNewsItem[]>(`/api/admin/news?status=pending${sourceQuery}`),
-      fetchAdminJson<AdminNewsItem[]>(`/api/admin/news?status=approved${sourceQuery}`),
-      fetchAdminJson<AdminNewsItem[]>(`/api/admin/news?status=rejected${sourceQuery}`),
-    ])
-      .then(([pending, approved, rejected]) => {
-        setCounts({
-          pending: pending.length,
-          approved: approved.length,
-          rejected: rejected.length,
-        });
-      })
-      .catch(() => {
-        setCounts({ pending: 0, approved: 0, rejected: 0 });
-      });
-  }, [sourceFilter]);
+  }, [categoryFilter, page, pageSize, searchQuery, sourceFilter, statusFilter]);
 
   const loadSyncErrors = useCallback(() => {
     setSyncErrorsLoading(true);
@@ -263,11 +273,10 @@ export default function AdminPage() {
   useEffect(() => {
     if (!authed) return;
     queueMicrotask(() => {
-      loadItems(statusFilter);
-      loadCounts();
+      loadItems();
       loadSyncErrors();
     });
-  }, [authed, loadItems, loadCounts, loadSyncErrors, statusFilter]);
+  }, [authed, loadItems, loadSyncErrors]);
 
   const onLogin = (event: React.FormEvent) => {
     event.preventDefault();
@@ -312,8 +321,7 @@ export default function AdminPage() {
           type: "success",
           message: status === "approved" ? "Article approved." : "Article rejected.",
         });
-        loadItems(statusFilter);
-        loadCounts();
+        loadItems();
       })
       .catch((e: unknown) => {
         const message = e instanceof Error ? e.message : "Failed to update status";
@@ -385,8 +393,7 @@ export default function AdminPage() {
         setPendingImageData(null);
         setSaveMessage("Changes saved successfully.");
         setFeedback({ type: "success", message: "Changes saved successfully." });
-        loadItems(statusFilter);
-        loadCounts();
+        loadItems();
       })
       .catch((e: unknown) => {
         const message = e instanceof Error ? e.message : "Failed to save changes";
@@ -457,26 +464,14 @@ export default function AdminPage() {
     reader.readAsDataURL(file);
   };
 
-  const filteredItems = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
-    return items.filter((item) => {
-      const matchesCategory =
-        categoryFilter === "admin" ||
-        categoryFilter === "all" ||
-        item.category_ta === categoryFilter;
-      const matchesQuery =
-        !q ||
-        item.title.toLowerCase().includes(q) ||
-        item.source.toLowerCase().includes(q);
-      return matchesCategory && matchesQuery;
-    });
-  }, [items, categoryFilter, searchQuery]);
-
-  const totalPages = Math.max(1, Math.ceil(filteredItems.length / pageSize));
-  const pagedItems = useMemo(() => {
-    const start = (page - 1) * pageSize;
-    return filteredItems.slice(start, start + pageSize);
-  }, [filteredItems, page, pageSize]);
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const pageNumbers = useMemo(() => {
+    const start = Math.max(1, Math.min(page - 2, totalPages - 4));
+    const end = Math.min(totalPages, start + 4);
+    return Array.from({ length: end - start + 1 }, (_, index) => start + index);
+  }, [page, totalPages]);
+  const showingStart = total === 0 ? 0 : (page - 1) * pageSize + 1;
+  const showingEnd = Math.min(page * pageSize, total);
 
   const isEditing = !!activeItem;
 
@@ -651,8 +646,7 @@ export default function AdminPage() {
               type="button"
               onClick={() => {
                 setFeedback({ type: "info", message: "Refreshing articles..." });
-                loadItems(statusFilter);
-                loadCounts();
+                loadItems();
                 loadSyncErrors();
               }}
               className="flex items-center gap-2 px-3 py-2 border border-outline-variant rounded-lg text-sm text-secondary hover:bg-surface-container"
@@ -681,7 +675,10 @@ export default function AdminPage() {
                   <button
                     key={tab.value}
                     type="button"
-                    onClick={() => setStatusFilter(tab.value)}
+                    onClick={() => {
+                      setStatusFilter(tab.value);
+                      setPage(1);
+                    }}
                     className={`px-4 py-2 rounded-lg border text-sm font-medium shadow-sm ${tab.className} ${
                       statusFilter === tab.value ? "ring-2 ring-primary/20" : "opacity-80"
                     }`}
@@ -701,7 +698,10 @@ export default function AdminPage() {
                   </span>
                   <select
                     value={sourceFilter}
-                    onChange={(event) => setSourceFilter(event.target.value)}
+                    onChange={(event) => {
+                      setSourceFilter(event.target.value);
+                      setPage(1);
+                    }}
                     className="h-10 w-full appearance-none rounded-lg border border-outline-variant bg-white pl-10 pr-10 text-sm font-medium text-on-surface shadow-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
                     aria-label="Filter articles by news source"
                   >
@@ -803,18 +803,18 @@ export default function AdminPage() {
             <div className="bg-white border border-outline-variant rounded-2xl shadow-sm">
               <div className="px-5 py-4 border-b border-outline-variant">
                 <h2 className="text-sm font-semibold text-on-surface">
-                  {STATUS_TABS.find((tab) => tab.value === statusFilter)?.label} Articles ({filteredItems.length})
+                  {STATUS_TABS.find((tab) => tab.value === statusFilter)?.label} Articles ({total})
                 </h2>
               </div>
               <div className="divide-y divide-outline-variant">
                 {loading ? (
                   <div className="px-5 py-6 text-sm text-on-surface-variant">Loading...</div>
-                ) : pagedItems.length === 0 ? (
+                ) : items.length === 0 ? (
                   <div className="px-5 py-6 text-sm text-on-surface-variant">
                     No articles found.
                   </div>
                 ) : (
-                  pagedItems.map((item) => (
+                  items.map((item) => (
                     <button
                       key={item.id}
                       type="button"
@@ -876,29 +876,30 @@ export default function AdminPage() {
                   <button
                     type="button"
                     onClick={() => setPage(Math.max(1, page - 1))}
+                    disabled={page === 1 || loading}
                     className="w-8 h-8 rounded-full border border-outline-variant flex items-center justify-center"
                   >
                     ‹
                   </button>
-                  {Array.from({ length: totalPages }, (_, i) => i + 1)
-                    .slice(0, 5)
-                    .map((num) => (
-                      <button
-                        key={num}
-                        type="button"
-                        onClick={() => setPage(num)}
-                        className={`w-8 h-8 rounded-full border ${
-                          page === num
-                            ? "bg-primary text-on-primary border-primary"
-                            : "border-outline-variant"
-                        }`}
-                      >
-                        {num}
-                      </button>
-                    ))}
+                  {pageNumbers.map((num) => (
+                    <button
+                      key={num}
+                      type="button"
+                      onClick={() => setPage(num)}
+                      disabled={loading}
+                      className={`w-8 h-8 rounded-full border ${
+                        page === num
+                          ? "bg-primary text-on-primary border-primary"
+                          : "border-outline-variant"
+                      }`}
+                    >
+                      {num}
+                    </button>
+                  ))}
                   <button
                     type="button"
                     onClick={() => setPage(Math.min(totalPages, page + 1))}
+                    disabled={page >= totalPages || loading}
                     className="w-8 h-8 rounded-full border border-outline-variant flex items-center justify-center"
                   >
                     ›
@@ -907,7 +908,10 @@ export default function AdminPage() {
                 <div className="flex items-center gap-3">
                   <select
                     value={pageSize}
-                    onChange={(e) => setPageSize(Number(e.target.value))}
+                    onChange={(e) => {
+                      setPageSize(Number(e.target.value));
+                      setPage(1);
+                    }}
                     className="border border-outline-variant rounded-lg px-3 py-2 text-sm bg-white"
                   >
                     {PAGE_SIZES.map((size) => (
@@ -917,9 +921,7 @@ export default function AdminPage() {
                     ))}
                   </select>
                   <span>
-                    Showing {(page - 1) * pageSize + 1} to{" "}
-                    {Math.min(page * pageSize, filteredItems.length)} of{" "}
-                    {filteredItems.length} articles
+                    Showing {showingStart} to {showingEnd} of {total} articles
                   </span>
                 </div>
               </div>
