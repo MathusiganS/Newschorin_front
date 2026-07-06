@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import "../index.css";
 
 export const metadata: Metadata = {
-  title: "NewsChorin",
+  title: "அகரம்",
   description: "Tamil news portal",
   icons: {
     icon: "/images/Fav_ICON.png",
