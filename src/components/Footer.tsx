@@ -7,15 +7,20 @@ export default function Footer() {
         <div className="border-white/10 p-10 md:col-span-4 md:border-r lg:p-12">
           <Link
             href="/"
-            className="mb-7 block font-serif text-[27px] font-black uppercase leading-none tracking-normal text-white hover:text-[#ffdad6]"
+            className="mb-7 inline-flex items-center"
+            aria-label="NewsChorin home"
           >
-            The Chronicle
+            <img
+              src="/images/Logo.jpg"
+              alt="NewsChorin"
+              className="h-12 w-auto max-w-[190px] rounded bg-white object-contain p-1"
+            />
           </Link>
           <p className="max-w-sm text-[15px] font-medium leading-6 text-white/70">
             நம்பகமான செய்திகள், ஆழமான பகுப்பாய்வு, மக்களுக்கு தேவையான
             முக்கிய தகவல்கள்.
           </p>
-          <div className="mt-8 flex gap-4 text-white">
+          <div className="mt-8 hidden gap-4 text-white" aria-hidden="true">
             <span className="text-lg font-black">◎</span>
             <span className="text-lg font-black">▣</span>
             <span className="text-lg font-black">⌯</span>
@@ -30,7 +35,7 @@ export default function Footer() {
             <li className="hover:text-white">தொழில்நுட்பம்</li>
             <li className="hover:text-white">வணிகம்</li>
             <li className="hover:text-white">கல்வி</li>
-            <li className="hover:text-white">மதம் & கலாச்சாரம்</li>
+            <li className="hover:text-white">சர்வதேசம்</li>
           </ul>
         </div>
 
@@ -54,7 +59,7 @@ export default function Footer() {
             </ul>
           </div>
           <p className="mt-12 border-t border-white/10 pt-8 text-[11px] font-black uppercase tracking-[0.16em] text-white/35">
-            © 2026 The Chronicle News Portal. All Rights Reserved.
+            © 2026 The Akaram News Portal. All Rights Reserved.
           </p>
         </div>
       </div>

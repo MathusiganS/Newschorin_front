@@ -261,17 +261,7 @@ export default function ArticlePage() {
 
               <div className="mt-6 flex flex-col justify-between gap-4 border-y border-[#c6c6cd] py-4 sm:mt-8 md:flex-row md:items-center">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-[#dfe3e7] font-black text-black">
-                    N
-                  </div>
-                  <div>
-                    <p className="text-[13px] font-black text-black">
-                      NEWSCHORIN
-                    </p>
-                    <p className="text-[13px] font-semibold text-[#45464d]">
-                      தமிழ் செய்தி அணி
-                    </p>
-                  </div>
+                 
                 </div>
 
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
@@ -360,7 +350,7 @@ export default function ArticlePage() {
                   தமிழ் செய்திகள்
                 </span>
                 <span className="rounded bg-[#f0f4f8] px-3 py-1 text-[10px] font-black uppercase tracking-[0.05em] text-[#45464d]">
-                  NewsChorin
+                  அகரம்
                 </span>
               </div>
 
@@ -404,7 +394,7 @@ export default function ArticlePage() {
               <div className="flex h-[250px] w-full max-w-[300px] items-center justify-center bg-[#dfe3e7] p-4 text-center">
                 <div className="space-y-2">
                   <p className="text-[12px] font-black text-black">
-                    NewsChorin Premium
+                    அகரம் Premium
                   </p>
                   <p className="text-[13px] font-semibold text-[#45464d]">
                     நம்பகமான செய்தி பகுப்பாய்வு.

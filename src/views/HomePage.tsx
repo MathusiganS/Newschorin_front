@@ -341,7 +341,7 @@ export default function HomePage() {
             </div>
             <div className="hidden text-right md:block">
               <p className="text-[12px] font-black uppercase tracking-[0.16em] text-[#76777d]">
-                NewsChorin / Tamil News
+                அகரம் / Tamil News
               </p>
             </div>
           </header>

@@ -14,7 +14,7 @@ const NAV_ITEMS = [
   { label: "தொழில்நுட்பம்", category: "தொழில்நுட்பம்" },
   { label: "வணிகம்", category: "வணிகம்" },
   { label: "கல்வி", category: "கல்வி" },
-  { label: "மதம் & கலாச்சாரம்", category: "மதம் & கலாச்சாரம்" },
+  { label: "சர்வதேசம்", category: "சர்வதேசம்" },
 ];
 
 export default function Header() {
@@ -59,11 +59,11 @@ export default function Header() {
         <Link
           href="/"
           className="flex min-w-0 shrink-0 items-center md:ml-6 xl:ml-24"
-          aria-label="NewsChorin home"
+          aria-label="அகரம் home"
         >
           <img
             src="/images/Logo.jpg"
-            alt="NewsChorin"
+            alt="அகரம்"
             className="h-9 w-auto max-w-[150px] object-contain sm:h-11 sm:max-w-[190px] md:h-14"
           />
         </Link>

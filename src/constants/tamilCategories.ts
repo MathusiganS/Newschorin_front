@@ -6,14 +6,14 @@ export const TAMIL_NEWS_CATEGORIES = [
   "விளையாட்டு",
   "சுகாதாரம்",
   "தொழில்நுட்பம்",
-  "சர்வதேசம்",
+  "மதம் & கலாச்சாரம்",
   "குற்றம் & சட்டம்",
   "கல்வி",
   "விபத்து & அனர்த்தம்",
   "போக்குவரத்து",
   "அரசு அறிவிப்பு",
   "சுற்றுலா & குடிவரவு",
-  "மதம் & கலாச்சாரம்",
+  "சர்வதேசம்",
 ] as const;
 
 export const PRIMARY_TAMIL_CATEGORIES = [
@@ -21,7 +21,7 @@ export const PRIMARY_TAMIL_CATEGORIES = [
   "தொழில்நுட்பம்",
   "வணிகம்",
   "கல்வி",
-  "மதம் & கலாச்சாரம்",
+  "சர்வதேசம்",
 ] as const;
 
 export const OTHER_TAMIL_CATEGORIES = TAMIL_NEWS_CATEGORIES.filter(

@@ -529,12 +529,16 @@ export default function AdminPage() {
       <nav className="hidden lg:flex fixed left-0 top-0 h-full w-[280px] bg-gradient-to-b from-[#0e2a66] to-[#0a1f45] text-white flex-col pt-6 pb-4 z-40">
         <div className="px-5">
           <div className="flex items-center gap-3">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#0f59ff] font-bold text-white">
-              N
-            </span>
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white p-1 shadow-sm">
+              <img
+                src="/images/Logo.jpg"
+                alt="NewsChorin"
+                className="max-h-full max-w-full object-contain"
+              />
+            </div>
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold uppercase tracking-wide">
-                NEWSCHORIN
+              <p className="sr-only">
+                NewsChorin
               </p>
               <p className="text-[11px] text-white/70">ஆசிரியர் மேசை</p>
             </div>
@@ -612,6 +616,17 @@ export default function AdminPage() {
       <main className="flex min-w-0 flex-1 flex-col bg-surface lg:ml-[280px] lg:h-full">
         <header className="flex min-h-16 flex-col gap-3 border-b border-outline-variant bg-white px-4 py-3 sm:px-6 lg:h-16 lg:flex-row lg:items-center lg:justify-between lg:px-8 lg:py-0">
           <div className="flex min-w-0 flex-wrap items-center gap-2 text-sm text-secondary">
+            <Link
+              href="/"
+              className="mr-2 flex items-center lg:hidden"
+              aria-label="NewsChorin home"
+            >
+              <img
+                src="/images/Logo.jpg"
+                alt="NewsChorin"
+                className="h-9 w-auto max-w-[150px] object-contain"
+              />
+            </Link>
             <Link href="/" className="hover:text-primary transition-colors">
               Home
             </Link>
