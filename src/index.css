@@ -164,3 +164,40 @@
 		font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
 	}
 }
+
+@media print {
+	@page {
+		margin: 16mm;
+	}
+
+	body {
+		background: #ffffff !important;
+		color: #000000 !important;
+	}
+
+	body > div > header,
+	body > div > footer,
+	.print-hidden {
+		display: none !important;
+	}
+
+	.print-article {
+		grid-column: 1 / -1 !important;
+		width: 100% !important;
+		max-width: none !important;
+		padding: 0 !important;
+		background: #ffffff !important;
+		color: #000000 !important;
+	}
+
+	.print-article img {
+		max-width: 100% !important;
+		page-break-inside: avoid;
+	}
+
+	.print-article p,
+	.print-article h1,
+	.print-article figure {
+		page-break-inside: avoid;
+	}
+}

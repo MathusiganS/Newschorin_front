@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { type FocusEvent, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
@@ -24,6 +24,9 @@ export default function Header() {
   const activeCategory = searchParams?.get("category") ?? "";
   const activeSearch = searchParams?.get("search") ?? "";
   const [searchText, setSearchText] = useState(activeSearch);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const moreMenuRef = useRef<HTMLDetailsElement | null>(null);
+  const moreCloseTimerRef = useRef<number | null>(null);
   const otherActive = OTHER_TAMIL_CATEGORIES.includes(
     activeCategory as (typeof OTHER_TAMIL_CATEGORIES)[number]
   );
@@ -52,6 +55,36 @@ export default function Header() {
 
     return () => window.clearTimeout(timeout);
   }, [activeSearch, pathname, router, searchParams, searchText]);
+
+  const cancelMoreMenuClose = () => {
+    if (moreCloseTimerRef.current) {
+      window.clearTimeout(moreCloseTimerRef.current);
+      moreCloseTimerRef.current = null;
+    }
+  };
+
+  const closeMoreMenu = () => {
+    cancelMoreMenuClose();
+    setMoreOpen(false);
+  };
+
+  const scheduleMoreMenuClose = () => {
+    cancelMoreMenuClose();
+    moreCloseTimerRef.current = window.setTimeout(() => {
+      setMoreOpen(false);
+      moreCloseTimerRef.current = null;
+    }, 1000);
+  };
+
+  useEffect(() => {
+    return () => cancelMoreMenuClose();
+  }, []);
+
+  const onMoreMenuBlur = (event: FocusEvent<HTMLDetailsElement>) => {
+    if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+      closeMoreMenu();
+    }
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-[#cfd4da] bg-white">
@@ -92,8 +125,15 @@ export default function Header() {
             </Link>
           ))}
 
-          <details className="group relative">
+          <details
+            ref={moreMenuRef}
+            open={moreOpen}
+            onToggle={(event) => setMoreOpen(event.currentTarget.open)}
+            onBlur={onMoreMenuBlur}
+            className="group relative"
+          >
             <summary
+              onMouseEnter={cancelMoreMenuClose}
               className={`flex cursor-pointer list-none items-center gap-1 text-[13px] font-black leading-none transition-colors marker:hidden hover:text-[#bb0112] ${
                 otherActive ? "text-[#bb0112]" : "text-[#3f465c]"
               }`}
@@ -114,7 +154,11 @@ export default function Header() {
               </svg>
             </summary>
 
-            <div className="absolute right-0 top-7 z-50 grid w-64 gap-1 border border-[#cfd4da] bg-white p-2 shadow-2xl">
+            <div
+              onMouseEnter={cancelMoreMenuClose}
+              onMouseLeave={scheduleMoreMenuClose}
+              className="absolute right-0 top-7 z-50 grid w-64 gap-1 border border-[#cfd4da] bg-white p-2 shadow-2xl"
+            >
               {OTHER_TAMIL_CATEGORIES.map((category) => (
                 <Link
                   key={category}

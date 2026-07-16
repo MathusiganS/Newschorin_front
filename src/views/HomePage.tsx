@@ -15,6 +15,7 @@ interface NewsItem {
   source: string;
   category_ta?: string;
   created_at: string;
+  approved_at?: string;
   view_count?: number;
   excerpt?: string;
 }
@@ -39,6 +40,10 @@ function formatDate(date: string) {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+function displayDate(article: NewsItem) {
+  return article.approved_at || article.created_at;
 }
 
 function articleImage(article: NewsItem, className: string) {
@@ -97,7 +102,7 @@ function AdBlock({
 function articleExcerpt(article: NewsItem) {
   const text = article.excerpt?.trim();
   if (text) return text;
-  return formatDate(article.created_at);
+  return formatDate(displayDate(article));
 }
 
 function isInternationalArticle(article: NewsItem) {
@@ -322,7 +327,7 @@ export default function HomePage() {
       .sort((a, b) => {
         const viewDiff = (b.view_count ?? 0) - (a.view_count ?? 0);
         if (viewDiff !== 0) return viewDiff;
-        return sriLankaTimeValue(b.created_at) - sriLankaTimeValue(a.created_at);
+        return sriLankaTimeValue(displayDate(b)) - sriLankaTimeValue(displayDate(a));
       })
       .slice(0, 5);
 
@@ -372,7 +377,7 @@ export default function HomePage() {
                 </span>
                 <span className="h-1 w-1 rounded-full bg-[#c6c6cd]" />
                 <span className="text-[13px] font-semibold text-[#76777d]">
-                  {formatDate(categoryLead.created_at)}
+                  {formatDate(displayDate(categoryLead))}
                 </span>
               </div>
             </div>
@@ -408,7 +413,7 @@ export default function HomePage() {
                           </p>
                           <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-[#c6c6cd] pt-4">
                             <span className="text-[13px] font-semibold text-[#76777d]">
-                              {formatDate(article.created_at)}
+                              {formatDate(displayDate(article))}
                             </span>
                             <span className="material-symbols-outlined text-[#76777d] transition-colors group-hover:text-black">
                               bookmark
@@ -469,7 +474,7 @@ export default function HomePage() {
                             {articleExcerpt(article)}
                           </p>
                           <span className="mt-2 block text-[13px] font-semibold text-[#76777d]">
-                            {formatDate(article.created_at)}
+                            {formatDate(displayDate(article))}
                           </span>
                         </div>
                       </Link>
@@ -532,7 +537,7 @@ export default function HomePage() {
                 {featured.category_ta || "செய்திகள்"}
               </p>
               <p className="mt-1 text-xs font-semibold text-[#76859b]">
-                {formatDate(featured.created_at)}
+                {formatDate(displayDate(featured))}
               </p>
             </div>
           </div>
@@ -589,7 +594,7 @@ export default function HomePage() {
                   {articleExcerpt(article)}
                 </p>
                 <p className="mt-4 text-sm font-semibold text-[#76859b]">
-                  {formatDate(article.created_at)}
+                  {formatDate(displayDate(article))}
                 </p>
               </Link>
             ))}
@@ -617,7 +622,7 @@ export default function HomePage() {
                   </h3>
                   <p className="mt-2 text-xs font-semibold text-[#76859b]">
                       {article.category_ta || "செய்திகள்"} •{" "}
-                      {formatDate(article.created_at)}
+                      {formatDate(displayDate(article))}
                   </p>
                   </div>
                 </Link>
@@ -688,7 +693,7 @@ export default function HomePage() {
                             {articleExcerpt(article)}
                           </p>
                           <p className="mt-5 text-sm font-black text-[#76859b]">
-                            {formatDate(article.created_at)}
+                            {formatDate(displayDate(article))}
                           </p>
                         </Link>
                       ))

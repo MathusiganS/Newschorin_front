@@ -14,6 +14,7 @@ interface NewsItem {
   source: string;
   category_ta?: string;
   created_at: string;
+  approved_at?: string;
   view_count?: number;
   excerpt?: string;
 }
@@ -34,10 +35,14 @@ function formatDate(date: string) {
   });
 }
 
+function displayDate(article: NewsItem) {
+  return article.approved_at || article.created_at;
+}
+
 function articleExcerpt(article: NewsItem) {
   const text = article.excerpt?.trim();
   if (text) return text;
-  return formatDate(article.created_at);
+  return formatDate(displayDate(article));
 }
 
 function articleImage(article: NewsItem, className: string) {
@@ -166,7 +171,7 @@ export default function LatestPage() {
                   {articleExcerpt(article)}
                 </p>
                 <p className="mt-5 border-t border-[#c6c6cd] pt-4 text-sm font-semibold text-[#76859b]">
-                  {formatDate(article.created_at)}
+                  {formatDate(displayDate(article))}
                 </p>
               </Link>
             ))}

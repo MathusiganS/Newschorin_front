@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { PRIMARY_TAMIL_CATEGORIES } from "../constants/tamilCategories";
+
 export default function Footer() {
   return (
     <footer className="w-full bg-black text-white">
@@ -31,6 +33,18 @@ export default function Footer() {
         <div className="border-white/10 p-10 md:col-span-2 md:border-r lg:p-12">
           <h4 className="mb-7 text-sm font-black text-white">பிரிவுகள்</h4>
           <ul className="grid gap-4 text-sm font-semibold text-white/55">
+            {PRIMARY_TAMIL_CATEGORIES.map((category) => (
+              <li key={category}>
+                <Link
+                  href={`/?category=${encodeURIComponent(category)}`}
+                  className="transition-colors hover:text-white"
+                >
+                  {category}
+                </Link>
+              </li>
+            ))}
+          </ul>
+          <ul className="hidden" aria-hidden="true">
             <li className="hover:text-white">அரசியல்</li>
             <li className="hover:text-white">தொழில்நுட்பம்</li>
             <li className="hover:text-white">வணிகம்</li>

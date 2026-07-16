@@ -16,6 +16,7 @@ interface ArticleDetail {
   source: string;
   category_ta?: string;
   created_at: string;
+  approved_at?: string;
   view_count?: number;
 }
 
@@ -26,6 +27,7 @@ interface NewsItem {
   source: string;
   category_ta?: string;
   created_at: string;
+  approved_at?: string;
   view_count?: number;
 }
 
@@ -52,6 +54,10 @@ function groupArticleIntoParagraphs(text: string, sentencesPerParagraph = 3) {
     paragraphs.push(sentences.slice(index, index + sentencesPerParagraph).join(" "));
   }
   return paragraphs;
+}
+
+function displayDate(item: { approved_at?: string; created_at: string }) {
+  return item.approved_at || item.created_at;
 }
 
 export default function ArticlePage() {
@@ -205,7 +211,7 @@ export default function ArticlePage() {
 
   const paragraphs = groupArticleIntoParagraphs(article.full_text, 3);
 
-  const formattedDate = formatSriLankaDate(article.created_at, {
+  const formattedDate = formatSriLankaDate(displayDate(article), {
     year: "numeric",
     month: "long",
     day: "numeric",
@@ -231,7 +237,7 @@ export default function ArticlePage() {
 
   return (
     <main className="flex-1 bg-white text-[#171c1f]">
-      <div className="fixed left-0 top-0 z-[100] h-1 w-full pointer-events-none">
+      <div className="print-hidden fixed left-0 top-0 z-[100] h-1 w-full pointer-events-none">
         <div
           className="h-full bg-[#bb0112] transition-[width] duration-100"
           style={{ width: `${readingProgress}%` }}
@@ -239,7 +245,7 @@ export default function ArticlePage() {
       </div>
 
       <div className="mx-auto w-full max-w-[1280px] px-4 py-6 sm:px-5 sm:py-8">
-        <nav className="mb-6 flex min-w-0 flex-wrap items-center gap-2 text-[12px] font-black tracking-[0.05em] text-[#45464d]">
+        <nav className="print-hidden mb-6 flex min-w-0 flex-wrap items-center gap-2 text-[12px] font-black tracking-[0.05em] text-[#45464d]">
           <Link
             href={`/?category=${encodeURIComponent(category)}`}
             className="hover:text-black"
@@ -253,7 +259,7 @@ export default function ArticlePage() {
         </nav>
 
         <article className="grid grid-cols-1 gap-10 lg:grid-cols-12 lg:gap-20">
-          <div className="lg:col-span-8">
+          <div className="print-article lg:col-span-8">
             <header className="mb-8 sm:mb-12">
               <h1 className="break-words font-serif text-[30px] font-black leading-tight text-black sm:text-[34px] md:text-[48px]">
                 {article.title}
@@ -268,7 +274,7 @@ export default function ArticlePage() {
                   <time className="text-[13px] font-semibold text-[#45464d]">
                     {formattedDate}
                   </time>
-                  <div className="flex items-center gap-2">
+                  <div className="print-hidden flex items-center gap-2">
                     <button
                       type="button"
                       onClick={shareArticle}
@@ -276,15 +282,6 @@ export default function ArticlePage() {
                       aria-label="Share"
                     >
                       <span className="material-symbols-outlined">share</span>
-                    </button>
-                    <button
-                      type="button"
-                      className="flex h-10 w-10 items-center justify-center text-[#45464d] hover:text-[#bb0112]"
-                      aria-label="Bookmark"
-                    >
-                      <span className="material-symbols-outlined">
-                        bookmark
-                      </span>
                     </button>
                     <button
                       type="button"
@@ -341,7 +338,7 @@ export default function ArticlePage() {
               )}
             </div>
 
-            <div className="mt-12 flex flex-col items-start justify-between gap-4 border-t border-[#c6c6cd] pt-6 sm:mt-20 sm:flex-row sm:items-center">
+            <div className="print-hidden mt-12 flex flex-col items-start justify-between gap-4 border-t border-[#c6c6cd] pt-6 sm:mt-20 sm:flex-row sm:items-center">
               <div className="flex flex-wrap gap-2">
                 <span className="rounded bg-[#f0f4f8] px-3 py-1 text-[10px] font-black uppercase tracking-[0.05em] text-[#45464d]">
                   {category}
@@ -386,7 +383,7 @@ export default function ArticlePage() {
             </div>
           </div>
 
-          <aside className="space-y-10 lg:col-span-4 lg:space-y-12">
+          <aside className="print-hidden space-y-10 lg:col-span-4 lg:space-y-12">
             <div className="flex flex-col items-center border border-[#c6c6cd] bg-[#f0f4f8] p-2">
               <p className="mb-2 text-[10px] font-black uppercase tracking-[0.08em] text-[#45464d]">
                 விளம்பரம்
@@ -426,7 +423,7 @@ export default function ArticlePage() {
                             {item.title}
                           </h4>
                           <p className="mt-1 text-[13px] font-semibold text-[#45464d]">
-                            {formatSriLankaDate(item.created_at, {
+                            {formatSriLankaDate(displayDate(item), {
                               month: "short",
                               day: "numeric",
                               hour: "2-digit",
@@ -447,7 +444,7 @@ export default function ArticlePage() {
         </article>
 
         {related.length > 0 ? (
-          <section className="mt-12 border-t border-[#c6c6cd] pt-12 sm:mt-20 sm:pt-20">
+          <section className="print-hidden mt-12 border-t border-[#c6c6cd] pt-12 sm:mt-20 sm:pt-20">
             <h2 className="mb-8 font-serif text-[26px] font-black text-black sm:mb-12 sm:text-[32px]">
               தொடர்புடைய செய்திகள்
             </h2>
@@ -481,7 +478,7 @@ export default function ArticlePage() {
                       {item.title}
                     </h3>
                     <p className="mt-auto pt-4 text-[13px] font-semibold text-[#45464d]">
-                      {formatSriLankaDate(item.created_at, {
+                      {formatSriLankaDate(displayDate(item), {
                         month: "short",
                         day: "numeric",
                         hour: "2-digit",
