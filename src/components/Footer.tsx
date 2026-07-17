@@ -58,13 +58,17 @@ export default function Footer() {
           <ul className="grid gap-4 text-sm font-semibold text-white/55">
             <li className="hover:text-white">எங்களை பற்றி</li>
             <li className="hover:text-white">தொடர்பு</li>
-            <li className="hover:text-white">நெறிமுறை</li>
-            <li className="hover:text-white">வேலை வாய்ப்பு</li>
+            <li className="hidden" aria-hidden="true">
+              நெறிமுறை
+            </li>
+            <li className="hidden" aria-hidden="true">
+              வேலை வாய்ப்பு
+            </li>
           </ul>
         </div>
 
         <div className="flex flex-col justify-between p-10 md:col-span-4 lg:p-12">
-          <div>
+          <div className="hidden" aria-hidden="true">
             <h4 className="mb-7 text-sm font-black text-white">சட்டம்</h4>
             <ul className="grid gap-4 text-sm font-semibold text-white/55">
               <li className="hover:text-white">தனியுரிமை கொள்கை</li>
