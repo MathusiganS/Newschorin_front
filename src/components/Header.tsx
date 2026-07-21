@@ -25,6 +25,7 @@ export default function Header() {
   const activeSearch = searchParams?.get("search") ?? "";
   const [searchText, setSearchText] = useState(activeSearch);
   const [moreOpen, setMoreOpen] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const moreMenuRef = useRef<HTMLDetailsElement | null>(null);
   const moreCloseTimerRef = useRef<number | null>(null);
   const otherActive = OTHER_TAMIL_CATEGORIES.includes(
@@ -97,7 +98,7 @@ export default function Header() {
           <img
             src="/images/Logo.jpg"
             alt="அகரம்"
-            className="h-9 w-auto max-w-[150px] object-contain sm:h-11 sm:max-w-[190px] md:h-14"
+            className="h-9 w-auto max-w-[132px] object-contain sm:h-11 sm:max-w-[190px] md:h-14"
           />
         </Link>
 
@@ -176,11 +177,11 @@ export default function Header() {
           </details>
         </nav>
 
-        <div className="flex min-w-0 flex-1 items-center justify-end gap-3 md:mr-6 md:flex-none xl:mr-24">
-          <label className="flex h-10 min-w-0 flex-1 items-center gap-2 border border-[#cfd4da] px-3 text-[#3f465c] transition-colors focus-within:border-black sm:max-w-[260px] md:h-9 md:w-auto md:flex-none">
+        <div className="flex min-w-0 flex-1 items-center justify-end gap-2 md:mr-6 md:flex-none md:gap-3 xl:mr-24">
+          <label className="flex h-8 min-w-0 max-w-[132px] flex-1 items-center gap-1.5 border border-[#cfd4da] px-2 text-[#3f465c] transition-colors focus-within:border-black sm:h-10 sm:max-w-[260px] sm:gap-2 sm:px-3 md:h-9 md:w-auto md:flex-none">
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              className="h-[17px] w-[17px]"
+              className="h-3.5 w-3.5 shrink-0 sm:h-[17px] sm:w-[17px]"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -197,10 +198,22 @@ export default function Header() {
               value={searchText}
               onChange={(event) => setSearchText(event.target.value)}
               placeholder="Search"
-              className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-black outline-none placeholder:text-[#76777d] md:w-36 md:flex-none"
+              className="min-w-0 flex-1 bg-transparent text-xs font-semibold text-black outline-none placeholder:text-[#76777d] sm:text-sm md:w-36 md:flex-none"
               type="search"
             />
           </label>
+          <button
+            type="button"
+            onClick={() => setMobileNavOpen((open) => !open)}
+            className="inline-flex h-8 w-8 shrink-0 items-center justify-center border border-[#cfd4da] text-[#3f465c] transition-colors hover:border-black hover:text-black sm:h-9 sm:w-9 lg:hidden"
+            aria-expanded={mobileNavOpen}
+            aria-controls="mobile-category-menu"
+            aria-label="Toggle categories"
+          >
+            <span className="material-symbols-outlined text-[20px] sm:text-[22px]">
+              {mobileNavOpen ? "close" : "menu"}
+            </span>
+          </button>
           <Link
             href="/admin"
             className="hidden"
@@ -213,20 +226,40 @@ export default function Header() {
         </div>
       </div>
 
-      <div className="border-t border-[#e3e7eb] px-3 py-2 lg:hidden">
-        <div className="flex flex-wrap gap-2">
-          <Link href="/" className="shrink-0 rounded border border-[#e3e7eb] px-3 py-2 text-xs font-bold text-[#3f465c]">
+      <div
+        id="mobile-category-menu"
+        className={`border-t border-[#e3e7eb] bg-white px-3 py-3 lg:hidden ${
+          mobileNavOpen ? "block" : "hidden"
+        }`}
+      >
+        <div className="grid max-h-[70vh] gap-2 overflow-y-auto">
+          <Link
+            href="/"
+            onClick={() => setMobileNavOpen(false)}
+            className={`rounded border px-3 py-3 text-sm font-bold transition-colors ${
+              activeCategory
+                ? "border-[#e3e7eb] text-[#3f465c]"
+                : "border-[#bb0112] bg-[#fff5f6] text-[#bb0112]"
+            }`}
+          >
             முகப்பு
           </Link>
-          {PRIMARY_TAMIL_CATEGORIES.map((category) => (
-            <Link
-              key={category}
-              href={`/?category=${encodeURIComponent(category)}`}
-              className="shrink-0 rounded border border-[#e3e7eb] px-3 py-2 text-xs font-bold text-[#3f465c]"
-            >
-              {category}
-            </Link>
-          ))}
+          {[...PRIMARY_TAMIL_CATEGORIES, ...OTHER_TAMIL_CATEGORIES].map(
+            (category) => (
+              <Link
+                key={category}
+                href={`/?category=${encodeURIComponent(category)}`}
+                onClick={() => setMobileNavOpen(false)}
+                className={`rounded border px-3 py-3 text-sm font-bold transition-colors ${
+                  activeCategory === category
+                    ? "border-[#bb0112] bg-[#fff5f6] text-[#bb0112]"
+                    : "border-[#e3e7eb] text-[#3f465c] hover:border-[#bb0112] hover:text-[#bb0112]"
+                }`}
+              >
+                {category}
+              </Link>
+            )
+          )}
         </div>
       </div>
     </header>
