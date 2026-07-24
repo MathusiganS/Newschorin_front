@@ -137,3 +137,7 @@ export async function fetchPopularNews<T>(limit: number): Promise<T[]> {
     return data.items;
   }
 }
+
+export async function fetchImportantNews<T>(): Promise<T | null> {
+  return fetchJson<T | null>("/api/news/important");
+}

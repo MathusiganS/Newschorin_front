@@ -260,21 +260,17 @@ export default function ArticlePage() {
 
         <article className="grid grid-cols-1 gap-10 lg:grid-cols-12 lg:gap-20">
           <div className="print-article lg:col-span-8">
-            <header className="mb-8 sm:mb-12">
+            <header className="mb-6 sm:mb-12">
               <h1 className="break-words font-serif text-[30px] font-black leading-tight text-black sm:text-[34px] md:text-[48px]">
                 {article.title}
               </h1>
 
-              <div className="mt-6 flex flex-col justify-between gap-4 border-y border-[#c6c6cd] py-4 sm:mt-8 md:flex-row md:items-center">
-                <div className="flex items-center gap-3">
-                 
-                </div>
-
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
+              <div className="mt-4 border-y border-[#c6c6cd] py-3 sm:mt-8 sm:py-4">
+                <div className="flex w-full items-center justify-between gap-3">
                   <time className="text-[13px] font-semibold text-[#45464d]">
                     {formattedDate}
                   </time>
-                  <div className="print-hidden flex items-center gap-2">
+                  <div className="print-hidden flex shrink-0 items-center gap-1 sm:gap-2">
                     <button
                       type="button"
                       onClick={shareArticle}
@@ -296,7 +292,7 @@ export default function ArticlePage() {
               </div>
             </header>
 
-            <figure className="mb-8 sm:mb-12">
+            <figure className="mb-6 sm:mb-12">
               <div className="aspect-video w-full overflow-hidden rounded">
                 {article.image ? (
                   <img
@@ -312,9 +308,6 @@ export default function ArticlePage() {
                   </div>
                 )}
               </div>
-              <figcaption className="mt-2 text-[13px] italic text-[#45464d]">
-                {category} செய்திக்கான பிரதிநிதி படம்.
-              </figcaption>
             </figure>
 
             <div className="max-w-none text-[16px] leading-7 text-black sm:text-[18px] sm:leading-8">

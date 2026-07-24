@@ -23,6 +23,7 @@ interface AdminNewsItem {
   source: string;
   category_ta?: string;
   status: AdminStatus;
+  show_in_important?: boolean;
   created_at: string;
 }
 
@@ -308,13 +309,22 @@ export default function AdminPage() {
     setActiveItem(null);
   };
 
-  const updateStatus = (id: number, status: AdminStatus) => {
+  const updateStatus = (
+    id: number,
+    status: AdminStatus,
+    showInImportant?: boolean
+  ) => {
     setSaving(true);
     setFeedback({ type: "info", message: "Updating article status..." });
     fetchAdminJson(`/api/admin/news/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status }),
+      body: JSON.stringify({
+        status,
+        ...(showInImportant === undefined
+          ? {}
+          : { show_in_important: showInImportant }),
+      }),
     })
       .then(() => {
         setFeedback({
@@ -373,6 +383,7 @@ export default function AdminPage() {
         source: activeItem.source,
         category_ta: activeItem.category_ta || "",
         status: activeItem.status,
+        show_in_important: activeItem.show_in_important !== false,
         created_at: activeItem.created_at,
       }),
     })
@@ -954,7 +965,13 @@ export default function AdminPage() {
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 lg:flex lg:items-center lg:gap-3">
                 <button
                   type="button"
-                  onClick={() => updateStatus(activeItem.id, "approved")}
+                  onClick={() =>
+                    updateStatus(
+                      activeItem.id,
+                      "approved",
+                      activeItem.show_in_important !== false
+                    )
+                  }
                   disabled={saving}
                   className="min-h-11 rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
                 >
@@ -1182,6 +1199,30 @@ export default function AdminPage() {
                       />
                     </div>
                   </div>
+
+                  <label className="flex min-h-12 cursor-pointer items-center gap-3 rounded-lg border border-outline-variant bg-surface-container-low px-4 py-3">
+                    <input
+                      type="checkbox"
+                      checked={activeItem.show_in_important !== false}
+                      onChange={(event) =>
+                        setActiveItem({
+                          ...activeItem,
+                          show_in_important: event.target.checked,
+                        })
+                      }
+                      className="h-5 w-5 shrink-0 accent-green-600"
+                    />
+                    <span>
+                      <span className="block text-sm font-semibold text-on-surface">
+                        Show in Important News
+                      </span>
+                      <span className="mt-0.5 block text-xs leading-5 text-on-surface-variant">
+                        Enabled by default. Untick before approval to keep this
+                        article in Latest News without using it as the homepage
+                        lead story.
+                      </span>
+                    </span>
+                  </label>
 
                   <div>
                     <div className="flex items-center justify-between gap-3">
