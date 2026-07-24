@@ -56,7 +56,14 @@ export default function Footer() {
         <div className="border-white/10 p-10 md:col-span-2 md:border-r lg:p-12">
           <h4 className="mb-7 text-sm font-black text-white">நிறுவனம்</h4>
           <ul className="grid gap-4 text-sm font-semibold text-white/55">
-            <li className="hover:text-white">எங்களை பற்றி</li>
+            <li>
+              <Link
+                href="/about"
+                className="transition-colors hover:text-white"
+              >
+                எங்களை பற்றி
+              </Link>
+            </li>
             <li className="hover:text-white">தொடர்பு</li>
             <li className="hidden" aria-hidden="true">
               நெறிமுறை

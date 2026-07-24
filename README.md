@@ -1,480 +1,215 @@
-# News App - Full Stack Project
+# NewsChorin Frontend
 
-A comprehensive news scraping and display application built with a React frontend, **FastAPI** backend (Python), and **Scrapy** scrapers (with optional Tamil news classification).
+Next.js frontend for the NewsChorin Tamil news portal. It provides the public
+home page, latest news page, article detail page, and admin panel UI.
 
-## 📋 Project Overview
+## Tech Stack
 
-This project consists of three main components:
+- Next.js 16
+- React 19
+- TypeScript
+- Tailwind CSS 4
+- ESLint
 
-1. **Frontend (`news-app`)**: React + TypeScript + Vite application displaying news articles
-2. **Backend (`tamilwin_scraper`)**: **FastAPI** app (`fastapi_app.py`) on port **4000**, PostgreSQL, static `/images`, Tamil category classification
-3. **Scraper (`tamilwin_scraper`)**: Scrapy spiders (e.g. tamilwin, virakesari, lankasri) that write `news.json` and optionally sync to the database via the API
+## Requirements
 
-### Project Structure
+- Node.js 20 or newer recommended
+- npm
+- Backend API running on `http://127.0.0.1:4000`
 
-```
-news_cursor/                     # repository root
-├── news-app/                    # React frontend (Vite + TypeScript)
-│   ├── src/
-│   │   ├── components/
-│   │   ├── pages/
-│   │   ├── data/
-│   │   └── App.tsx
-│   └── package.json
-└── tamilwin_scraper/
-    ├── fastapi_app.py           # FastAPI server (run with uvicorn)
-    ├── classifier.py            # Tamil category from first 70 words + .pkl models
-    ├── models/                  # tamil_news_classifier.pkl, label_encoder.pkl (you add these)
-    ├── spiders/                 # tamilwin.py, virakesari.py, lankasri.py
-    ├── settings.py
-    ├── pipelines.py
-    ├── run_all.py               # run all spiders + POST /api/sync
-    ├── requirements.txt
-    ├── news.json                # merged scraped output
-    └── image/                   # downloaded article images
-```
-
----
-
-## 🚀 Prerequisites
-
-Before starting, ensure you have the following installed:
-
-- **Node.js** (v16+ recommended) - [Download](https://nodejs.org/)
-- **Python** (3.8+) - [Download](https://www.python.org/)
-- **PostgreSQL** (12+) - [Download](https://www.postgresql.org/)
-- **Git** (optional)
-
-### Verify Installations
+## Quick Start
 
 ```bash
-node --version
-npm --version
-python --version
-pip --version
-psql --version
-```
-
----
-
-## 📦 Installation Steps
-
-### Step 1: Set Up PostgreSQL Database
-
-1. **Open PostgreSQL** (use pgAdmin GUI or psql CLI)
-
-2. **Create the database**:
-   ```sql
-   CREATE DATABASE news_techorin;
-   ```
-
-3. **Connect to the database**:
-   ```sql
-   \c news_techorin
-   ```
-
-4. **Create the news table** (optional—the API and scraper pipeline create compatible tables automatically):
-   ```sql
-   CREATE TABLE news (
-     id SERIAL PRIMARY KEY,
-     title TEXT NOT NULL,
-     url TEXT UNIQUE NOT NULL,
-     image_path TEXT DEFAULT '',
-     full_text TEXT DEFAULT '',
-     source TEXT DEFAULT '',
-     category_ta TEXT DEFAULT '',
-     created_at TIMESTAMP DEFAULT NOW()
-   );
-   ```
-
-5. **Set user password** (if needed):
-   ```sql
-   ALTER USER postgres WITH PASSWORD '12345';
-   ```
-
-#### Connection String Used
-```
-postgresql://postgres:12345@localhost:5432/news_techorin
-```
-
----
-
-### Step 2: Install Python Dependencies (Scraper + FastAPI Backend)
-
-From the **repository root** (the folder that contains `tamilwin_scraper/`):
-
-```bash
-# Windows (optional but recommended)
-python -m venv venv
-venv\Scripts\activate
-
-# Mac/Linux
-python3 -m venv venv
-source venv/bin/activate
-
-pip install -r tamilwin_scraper/requirements.txt
-```
-
-If spiders used to fail with `No module named 'joblib'`, your venv was missing ML/API packages; the above line installs them. Scraping now starts even without `joblib` (categories stay empty until you install deps and add `.pkl` files).
-
-For Playwright-based spiders, install the browser once:
-
-```bash
-playwright install chromium
-```
-
-**Notable packages:** Scrapy, scrapy-playwright, FastAPI, Uvicorn, psycopg2-binary, scikit-learn, joblib (classification).
-
-**Tamil classification (optional):** copy `tamil_news_classifier.pkl` and `label_encoder.pkl` into `tamilwin_scraper/models/`. Without them, the app runs but `category_ta` stays empty.
-
----
-
-### Step 3: Install Frontend Dependencies
-
-```bash
-cd news-app
 npm install
+npm run dev
 ```
 
-**Key Dependencies:**
-- `react` ^19.2.4
-- `react-router-dom` ^7.13.1 - Client-side routing
-- `tailwindcss` ^4.2.1 - Utility CSS framework
-- `typescript` ~5.9.3
+Open:
 
----
-
-## 🏃 Running the Project
-
-### Terminal 1: Start PostgreSQL
-
-Ensure PostgreSQL service is running:
-
-**Windows:**
-```bash
-# PostgreSQL usually runs as a service automatically
-# Check in Services app or use:
-pg_isready -h localhost -p 5432
+```text
+http://localhost:5173
 ```
 
-**Mac (with Homebrew):**
-```bash
-brew services start postgresql
+The frontend dev server runs on port `5173`.
+
+## Environment Variables
+
+Create or update `.env`:
+
+```env
+NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:4000
 ```
 
-**Linux:**
-```bash
-sudo systemctl start postgresql
-```
+This value is used for backend API calls and image URLs.
 
----
+`next.config.ts` also rewrites these paths to the backend:
 
-### Terminal 2: Start the Backend (FastAPI)
+- `/api/:path*` -> backend `/api/:path*`
+- `/images/:path*` -> backend `/images/:path*`
 
-Use your **venv** (`python -m venv venv` then activate). Port **4000** must match `news-app/vite.config.ts`.
+For production, set `NEXT_PUBLIC_API_BASE_URL` or `BACKEND_URL` to the deployed
+backend URL.
 
-**Option A — repository root** (folder that contains `tamilwin_scraper/`):
-
-```bash
-cd C:\Users\krsna\OneDrive\Documents\news_cursor
-uvicorn tamilwin_scraper.fastapi_app:app --reload --port 4000
-```
-
-**Option B — inside `tamilwin_scraper`** (also works after a path fix in `fastapi_app.py`):
+## Available Scripts
 
 ```bash
-cd C:\Users\krsna\OneDrive\Documents\news_cursor\tamilwin_scraper
-uvicorn fastapi_app:app --reload --port 4000
-```
-
-Do **not** use `uvicorn fastapi_app:app` from the repo root (wrong module). From the repo root, always use `tamilwin_scraper.fastapi_app:app`.
-
-**Why port 4000?** The Vite dev server in `news-app` proxies `/api` and `/images` to `http://localhost:4000`.
-
-**Expected output:** Uvicorn reports `Uvicorn running on http://127.0.0.1:4000`.
-
-**Backend (same paths as before, plus classification):**
-- `GET http://localhost:4000/api/news` — list articles (includes `source`, `category_ta` when set)
-- `GET http://localhost:4000/api/news/{id}` — article detail (`full_text`, `category_ta`, …)
-- `POST http://localhost:4000/api/sync` — authenticated import/update from `tamilwin_scraper/news.json` into PostgreSQL
-- `POST http://localhost:4000/api/classify` — JSON body `{"text": "..."}` or `{"full_text": "..."}` → `{"category_ta": "..."}` (uses first 70 words)
-- `GET http://localhost:4000/images/...` — static files from `tamilwin_scraper/image/`
-
-**Database URL:** defaults to `postgresql://postgres:12345@localhost:5432/news_techorin`. Override with env var `DATABASE_URL` if needed.
-
----
-
-### Terminal 3: Start the Frontend (React Dev Server)
-
-```bash
-cd news-app
 npm run dev
 ```
 
-**Expected Output:**
-```
-  VITE v8.0.0  ready in 123 ms
-
-  ➜  Local:   http://localhost:5173/
-  ➜  press h + enter to show help
-```
-
-Open **http://localhost:5173** in your browser.
-
-**Available Routes:**
-- `/` - HomePage (displays all news articles)
-- `/article/:id` - ArticlePage (detailed view of single article)
-
----
-
-### Terminal 4: Run the Scraper (optional)
-
-From inside `tamilwin_scraper`, with venv activated:
+Starts the local Next.js dev server on port `5173`.
 
 ```bash
-# One spider
-scrapy crawl tamilwin
-
-# Or all three spiders + automatic sync to DB (requires API running on :4000)
-python run_all.py
-```
-
-**What the scraper does:**
-1. Crawls configured sites (e.g. tamilwin, virakesari, lankasri)
-2. Saves images under `tamilwin_scraper/image/`
-3. Merges items into `tamilwin_scraper/news.json` and, if PostgreSQL is up, inserts/updates the `news` table via the pipeline
-4. Sets Tamil **`category_ta`** when classifier `.pkl` files are in `tamilwin_scraper/models/`
-
-**Sync JSON → DB:** With the FastAPI server running, `run_all.py` calls `POST /api/sync` at the end. You can also trigger sync manually (e.g. with curl or any HTTP client) while the server is up.
-
----
-
-## 🔄 Complete Workflow
-
-### First time — full stack
-
-```bash
-# 0. PostgreSQL: create DB news_techorin and ensure service is running
-
-# 1. Repository root: Python venv + deps + Playwright browser
-python -m venv venv
-# Windows: venv\Scripts\activate   |  Mac/Linux: source venv/bin/activate
-pip install -r tamilwin_scraper/requirements.txt
-playwright install chromium
-
-# 2. Backend (repo root)
-uvicorn tamilwin_scraper.fastapi_app:app --reload --port 4000
-
-# 3. Frontend (new terminal)
-cd news-app
-npm install
-npm run dev
-
-# 4. Data (new terminal, tamilwin_scraper, venv on)
-cd tamilwin_scraper
-scrapy crawl tamilwin
-# Optional: push news.json into DB
-curl -u admin:admin -X POST http://localhost:4000/api/sync -H "Content-Type: application/json" -d "{}"
-```
-
-### Day-to-day
-
-```bash
-# Terminal A (repo root, venv on)
-uvicorn tamilwin_scraper.fastapi_app:app --reload --port 4000                 
-
-# Terminal B
-cd news-app && npm run dev
-
-# Terminal C (when you want fresh articles)
-cd tamilwin_scraper
-scrapy crawl tamilwin   # or: python run_all.py
-```
-
----
-
-## 📊 API Endpoints
-
-### Get All News
-```
-GET /api/news
-```
-**Response (example):**
-```json
-[
-  {
-    "id": 1,
-    "title": "Article Title",
-    "image": "/images/somefile.webp",
-    "source": "tamilwin",
-    "category_ta": "அரசியல்",
-    "created_at": "2024-03-15T10:30:00Z"
-  }
-]
-```
-
-### Get article details
-```
-GET /api/news/{id}
-```
-**Response (example):**
-```json
-{
-  "id": 1,
-  "title": "Full Article Title",
-  "url": "https://tamilwin.com/article/...",
-  "image": "/images/somefile.webp",
-  "full_text": "Complete article content...",
-  "source": "tamilwin",
-  "category_ta": "சர்வதேசம்",
-  "created_at": "2024-03-15T10:30:00Z"
-}
-```
-
-### Sync `news.json` to PostgreSQL
-```
-POST /api/sync
-```
-Body can be empty JSON `{}`. HTTP Basic admin credentials or `X-API-Key`
-authentication is required. The endpoint reads `tamilwin_scraper/news.json`
-and upserts by `url`.
-
-### Classify snippet
-```
-POST /api/classify
-Content-Type: application/json
-
-{"full_text": "…Tamil article text…"}
-```
-Returns `{"category_ta": "…"}` using the first 70 words when models are installed.
-
----
-
-## 🛠️ Build for Production
-
-### Frontend Build
-
-```bash
-cd news-app
 npm run build
 ```
 
-Creates optimized production build in `dist/` folder.
-
-### Preview Production Build
+Creates a production build and checks TypeScript.
 
 ```bash
-npm run preview
+npm run start
 ```
 
----
+Starts the built Next.js app.
 
-## 🐛 Troubleshooting
-
-### Issue: PostgreSQL Connection Error
-**Error:** `Error: connect ECONNREFUSED 127.0.0.1:5432`
-
-**Solution:**
-- Ensure PostgreSQL service is running
-- Verify connection string: default in `tamilwin_scraper/fastapi_app.py` and `tamilwin_scraper/pipelines.py`, or set `DATABASE_URL`
-- Check if database `news_techorin` exists
-- Verify username/password are correct
-
-### Issue: Frontend Can't Connect to Backend
-**Error:** `CORS policy: No 'Access-Control-Allow-Origin'`
-
-**Solution:**
-- FastAPI enables permissive CORS for development
-- Ensure Uvicorn is running on **port 4000** (matches `news-app/vite.config.ts` proxy)
-- Open the app via the Vite URL (e.g. `http://localhost:5173`) so `/api` is proxied
-
-### Issue: Scraper Not Saving to Database
-**Error:** `psycopg2.OperationalError: could not connect to server`
-
-**Solution:**
-- Verify PostgreSQL is running
-- Check `DB_URL` in `tamilwin_scraper/pipelines.py` (scraper) matches your Postgres credentials
-- Ensure database credentials match `DATABASE_URL` / defaults in `tamilwin_scraper/fastapi_app.py` (API)
-
-### Issue: Images Not Displaying
-**Error:** 404 on image URLs
-
-**Solution:**
-- Verify scraper was run and downloaded images to `tamilwin_scraper/image/`
-- Check image path in database matches directory structure
-- Ensure FastAPI is running so `/images/...` is served from `tamilwin_scraper/image/`
-
-### Port Already in Use
-**Error:** `Error: listen EADDRINUSE :::4000` or `:5173`
-
-**Solution:**
 ```bash
-# Kill process on port 4000
-lsof -ti:4000 | xargs kill -9  # Mac/Linux
-netstat -ano | findstr :4000   # Windows (then taskkill /PID <PID> /F)
-
-# Kill process on port 5173
-lsof -ti:5173 | xargs kill -9
+npm run lint
 ```
 
----
+Runs ESLint across the frontend project.
 
-## 📝 Environment Variables
+## Application Routes
 
-**Backend (Python):** configuration is documented in
-`tamilwin_scraper/.env.example`, including PostgreSQL, CORS, admin credentials,
-the scheduler API key, Gemini, and classifier settings.
+| Route | Purpose |
+| --- | --- |
+| `/` | Home page with featured, latest, trending, and category news |
+| `/latest` | Latest approved news, paginated from the backend |
+| `/article/[id]` | Full article detail page |
+| `/admin` | Admin login and moderation panel |
 
-**Frontend:** dev server proxies `/api` and `/images` to port 4000 via `vite.config.ts`; no `.env` required for local use unless you change that.
+## Important Source Files
 
----
+```text
+src/app/
+  layout.tsx              App shell and metadata
+  page.tsx                Home route
+  latest/page.tsx         Latest news route
+  article/[id]/page.tsx   Article detail route
+  admin/page.tsx          Admin route
 
-## 📚 Tech Stack Summary
+src/components/
+  Header.tsx              Logo, search, desktop nav, mobile category menu
+  Footer.tsx              Footer logo and category links
 
-| Layer | Technology | Version |
-|-------|-----------|---------|
-| Frontend | React + TypeScript | 19.2.4 |
-| Frontend Build | Vite | 8.0.0 |
-| Frontend Styling | Tailwind CSS | 4.2.1 |
-| Frontend Routing | React Router | 7.13.1 |
-| Backend | FastAPI + Uvicorn | see requirements.txt |
-| Database | PostgreSQL | 12+ |
-| Database Client (Python) | psycopg2-binary | see requirements.txt |
-| Web Scraper | Scrapy | see requirements.txt |
-| Scraper Browser | Playwright | see requirements.txt |
-| Classification | scikit-learn / joblib | optional `.pkl` in `tamilwin_scraper/models/` |
+src/views/
+  HomePage.tsx            Home page UI and data loading
+  LatestPage.tsx          Latest page UI and pagination
+  ArticlePage.tsx         Article detail, print behavior, related stories
+  AdminPage.tsx           Admin table, filters, approval/rejection workflow
 
----
+src/lib/
+  api.ts                  API helper functions and backend URL normalization
+  datetime.ts             Sri Lanka date/time formatting helpers
 
-## 🤝 Contributing
+src/constants/
+  tamilCategories.ts      Tamil category names shared by navigation and filters
 
-1. Create feature branches for new features
-2. Run linting: `npm run lint` (frontend)
-3. Test all components before pushing
-4. Update this README for significant changes
+public/images/
+  Logo.jpg                Header/footer/admin logo
+  Fav_ICON.png            Browser tab icon
+```
 
----
+## API Usage
 
-## 📄 License
+The frontend calls the backend through `src/lib/api.ts`.
 
-ISC
+Main public endpoints used:
 
----
+- `GET /api/news`
+- `GET /api/news/count`
+- `GET /api/news/popular`
+- `GET /api/news/trending`
+- `GET /api/news/{id}`
+- `POST /api/news/{id}/view`
 
-## 💡 Quick Reference
+Admin endpoints used:
 
-| Command | Location | Purpose |
-|---------|----------|---------|
-| `npm run dev` | news-app | Start Vite dev server |
-| `npm run build` | news-app | Build for production |
-| `npm run lint` | news-app | Check code quality |
-| `uvicorn tamilwin_scraper.fastapi_app:app --reload --port 4000` | repo root | Start FastAPI backend |
-| `pip install -r tamilwin_scraper/requirements.txt` | repo root | Install Python deps |
-| `playwright install chromium` | tamilwin_scraper | Browser for Scrapy-Playwright |
-| `scrapy crawl <spider>` | tamilwin_scraper | Run a spider (`tamilwin`, `virakesari`, `lankasri`) |
-| `python run_all.py` | tamilwin_scraper | All spiders + `POST /api/sync` (API must be up) |
-| `psql -U postgres -d news_techorin` | — | Connect to database |
+- `POST /api/admin/login`
+- `POST /api/admin/logout`
+- `GET /api/admin/news`
+- `GET /api/admin/news/{id}`
+- `PUT /api/admin/news/{id}`
+- `POST /api/admin/news/{id}/approve`
+- `POST /api/admin/news/{id}/reject`
 
----
+Admin authentication uses the backend cookie session. API requests include
+`credentials: "include"` in `src/lib/api.ts`.
 
-**Happy Coding! 🎉**
+## News Date Display
+
+Public news pages prefer `approved_at` when available. This means users see the
+time the admin approved the news. If an older article does not have
+`approved_at`, the UI falls back to `created_at`.
+
+All displayed dates are formatted with Sri Lanka time helpers in:
+
+```text
+src/lib/datetime.ts
+```
+
+## Mobile Responsiveness Notes
+
+The header is responsive:
+
+- Desktop shows the full navigation row.
+- Mobile shows the logo, scaled search bar, and hamburger category button.
+- Mobile categories open in a dropdown and close after a category is selected.
+
+When editing responsive UI, keep desktop classes intact and adjust mobile-first
+classes before `sm`, `md`, or `lg` breakpoints.
+
+## Development Workflow
+
+1. Start the backend on port `4000`.
+2. Start the frontend with `npm run dev`.
+3. Open `http://localhost:5173`.
+4. Make UI changes.
+5. Run `npm run build` before handing off production changes.
+
+## Troubleshooting
+
+### API requests fail
+
+Check that the backend is running:
+
+```text
+http://127.0.0.1:4000/api/health
+```
+
+Also confirm `.env` has:
+
+```env
+NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:4000
+```
+
+### Images do not load
+
+Images are served by the backend from `/images`. Make sure the backend is
+running and article `image` values point to valid backend image paths.
+
+### Admin login does not work
+
+Check backend `.env` values for:
+
+- `ADMIN_USER`
+- `ADMIN_PASS` or `ADMIN_PASSWORD_HASH`
+- `JWT_SECRET`
+- `CORS_ORIGINS`
+
+The frontend origin must be included in backend `CORS_ORIGINS`.
+
+## Production Checklist
+
+- Set the deployed backend URL in environment variables.
+- Run `npm run build`.
+- Confirm public pages load approved news.
+- Confirm article images load from the backend.
+- Confirm admin login, approve, reject, pagination, and filters work.
