@@ -64,7 +64,14 @@ export default function Footer() {
                 எங்களை பற்றி
               </Link>
             </li>
-            <li className="hover:text-white">தொடர்பு</li>
+            <li>
+              <Link
+                href="/contact"
+                className="transition-colors hover:text-white"
+              >
+                தொடர்பு
+              </Link>
+            </li>
             <li className="hidden" aria-hidden="true">
               நெறிமுறை
             </li>
